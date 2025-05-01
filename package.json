@@ -6,8 +6,6 @@
     "start:dev": "nodemon server.js",
     "start:prod": "cross-env NODE_ENV=production node server.js"
   },
-  ,
-  
 "engines": {
       "node":"20.18.1"
     },
