@@ -36,10 +36,7 @@ const setImageURL = (doc)=>{
     const imageUrl =`${process.env.BASE_URL}/upload/orphanage/${doc.PrfileImg}`
     doc.PrfileImg = imageUrl;
   }
-  if(doc.CoverImg){
-    const imageUrl =`${process.env.BASE_URL}/orphanage/${doc.CoverImg}`
-    doc.CoverImg = imageUrl;
-  }
+
 }
 // getAll / update / getOne
 orphanageSchema.post('init', (doc) => {
