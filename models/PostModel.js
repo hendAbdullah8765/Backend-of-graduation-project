@@ -43,13 +43,13 @@ const PostSchema = new mongoose.Schema(
 
 const setImageURL = (doc)=>{
   if(doc.image){
-    const imageUrl =`${process.env.BASE_URL}/posts/${doc.image}`
+    const imageUrl =`${process.env.BASE_URL}/upload/posts/${doc.image}`
     doc.image = imageUrl;
   }
   if(doc.images){
     const imagesList = []
     doc.images.forEach((img) =>{
-      const imageUrl =`${process.env.BASE_URL}/posts/${img}`
+      const imageUrl =`${process.env.BASE_URL}/upload/posts/${img}`
       imagesList.push(imageUrl)
     }) 
     doc.images = imagesList;
