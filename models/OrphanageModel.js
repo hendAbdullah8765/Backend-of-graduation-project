@@ -33,7 +33,7 @@ location: String
 
 const setImageURL = (doc)=>{
   if(doc.PrfileImg){
-    const imageUrl =`${process.env.BASE_URL}/orphanage/${doc.PrfileImg}`
+    const imageUrl =`${process.env.BASE_URL}/upload/orphanage/${doc.PrfileImg}`
     doc.PrfileImg = imageUrl;
   }
   if(doc.CoverImg){
