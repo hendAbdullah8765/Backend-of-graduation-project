@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema({
 );
 const setImageURL = (doc)=>{
   if(doc.profileImg){
-    const imageUrl =`${process.env.BASE_URL}/users/${doc.profileImg}`
+    const imageUrl =`${process.env.BASE_URL}/upload/users/${doc.profileImg}`
     doc.profileImg = imageUrl;
   }
 }
