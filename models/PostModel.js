@@ -21,16 +21,6 @@ const PostSchema = new mongoose.Schema(
     images:{
       type: [String],
       default: []},
-    Reactions: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Reactions',
-      default: 0,
-      },
-    comments: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Comments',
-      }],
-
     slug: {
        type: String
        
