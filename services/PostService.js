@@ -15,38 +15,35 @@ exports.uploadPostImages = uploadMixOfImages([
   maxCount : 5 
 }
 ])
-
 //image processing 
-exports.resizePostImages = asyncHandler(async (req, res, next) =>{
- // 1-image processing for image
-  if  (req.files.image){
+exports.resizePostImages = asyncHandler(async (req, res, next) => {
+  if (req.files && req.files.image) {
     const imageFileName = `post-${uuidv4()}-${Date.now()}.jpeg`;
-   await sharp(req.files.image[0].buffer )
-    .resize(2000 , 1333)
-    .toFormat("jpeg")
-    .jpeg({ quality: 90 })
-    .toFile(`upload/posts/${imageFileName}`);
-//save image into our db
-  req.body.image = imageFileName;
+    await sharp(req.files.image[0].buffer)
+      .resize(2000, 1333)
+      .toFormat("jpeg")
+      .jpeg({ quality: 90 })
+      .toFile(`upload/posts/${imageFileName}`);
+    req.body.image = imageFileName;
   }
- // 2-image processing for images
- if  (req.files.images){
-  req.body.images = [];
- await Promise.all( 
-   req.files.images.map(async(img , index) => {
-  const imageName = `post-${uuidv4()}-${Date.now()}-${index + 1}.jpeg`;
-  await sharp(img.buffer)
-   .resize(2000 , 1333)
-   .toFormat("jpeg")
-   .jpeg({ quality: 90 })
-   .toFile(`upload/posts/${imageName}`);
-//save image into our db
- req.body.images.push(imageName) 
-})
-)
-  next();
- }
-})
+
+  if (req.files && req.files.images) {
+    req.body.images = [];
+    await Promise.all(
+      req.files.images.map(async (img, index) => {
+        const imageName = `post-${uuidv4()}-${Date.now()}-${index + 1}.jpeg`;
+        await sharp(img.buffer)
+          .resize(2000, 1333)
+          .toFormat("jpeg")
+          .jpeg({ quality: 90 })
+          .toFile(`upload/posts/${imageName}`);
+        req.body.images.push(imageName);
+      })
+    );
+  }
+
+  next();  
+});
 
 // @desc  get list of Post
 // @route Get /api/v1/posts
