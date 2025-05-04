@@ -7,7 +7,14 @@ const sendEmail = require("../utils/sendEmail");
 const GenerateToken = require("../utils/createToken");
 const User = require("../models/UserModel");
 const Orphanage = require("../models/OrphanageModel");
-
+const Post =require('../models/PostModel')
+const AdoptionRequest =require('../models/AdoptionRequestModel')
+const DonationItem =require('../models/DonationItemModel')
+const Donation = require('../models/DonationModel')
+const Notification = require('../models/NotificationModel')
+const Setting =require('../models/SettingsModel')
+const Child = require('../models/ChildModel')
+const Message = require('../models/MessageModel')
 // @desc  signup
 // @route Get /api/v1/auth/signup
 // @access Public
@@ -56,10 +63,42 @@ exports.login = asyncHandler(async (req, res, next) => {
   if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
     return next(new ApiError("Incorrect email or password", 401));
   }
-
   const token = GenerateToken(user._id);
+  
+  const posts = await Post.find({ user: user._id });
+  const requests = await AdoptionRequest.find({ orphanage: user._id });
+  const donationItems = await DonationItem.find({ userId: user._id }).populate('orphanageId', 'name');
+  const donation = await Donation.find({ userId: user._id }).populate('orphanageId', 'name');
+  const notification = await Notification.find({ userId: user._id }).populate('orphanageId', 'name');
+  const settings = await Setting.find({ userId: user._id }).populate('orphanageId', 'name');
 
-  res.status(200).json({ data: user, token });
+  let children = [];
+  if (user.role === 'Orphanage') {
+    children = await Child.find({ orphanage: user._id });
+  }
+  let messages = [];
+  messages = await Message.find({
+    $or: [{ senderId: user._id }, { receiverId: user._id }]
+  })
+  .populate('senderId', 'name email') 
+  .populate('receiverId', 'name email'); 
+  res.status(200).json({ 
+    data: {
+      user:{
+        ...user.toObject(),
+        profilePicture: user.profileImg, // إضافة صورة البروفايل إن وجدت
+      },
+      token,
+      posts,
+      children,
+      requests,
+      messages,
+      donationItems,
+      donation,
+      notification,
+      settings 
+    }
+    , token });
 });
 
 // make sure the user is logged in
