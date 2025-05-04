@@ -124,7 +124,6 @@ exports.updateLoggedUserPassword = asyncHandler(async(req, res, next) => {
 exports.updateLoggedUserData = asyncHandler(async(req, res, next) =>{
   const updatedUser = await User.findByIdAndUpdate(req.user._id , {
     name: req.body.name,
-    email: req.body.email,
     phone: req.body.phone,
     profileImg: req.body.profileImg
   } , {new: true}
