@@ -10,7 +10,7 @@ const GenerateToken = require('../utils/createToken')
 const {uploadSingleImage} = require ('../middlewares/uploadImagesMiddleware')
 
 //upload single image
-exports.uploadUserImage = uploadSingleImage("profileImg");
+exports.uploadUserImage = uploadSingleImage("image");
 
 //image processing
 exports.resizeImage =asyncHandler(async (req , res, next) => {
@@ -23,7 +23,7 @@ exports.resizeImage =asyncHandler(async (req , res, next) => {
    .toFile(`upload/users/${filename}`);
 
    //save image into our db
-  req.body.profileImg = filename;
+  req.body.image = filename;
  }   
   next();  
 })
