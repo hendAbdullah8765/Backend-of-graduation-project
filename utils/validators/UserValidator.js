@@ -66,7 +66,7 @@ exports.updateUserValidator = [
      req.body.slug = slugify(val);
       return true;
   }),
-  check('email')
+  check('email').optional()
   .notEmpty().withMessage('User email is required')
   .isEmail().withMessage("invalid email address")
   .custom((val) =>
@@ -132,7 +132,7 @@ exports.updateLoggedUserValidator = [
      req.body.slug = slugify(val);
       return true;
   }),
-  check('email')
+  check('email').optional()
   .notEmpty().withMessage('User email is required')
   .isEmail().withMessage("invalid email address")
   .custom((val) =>
