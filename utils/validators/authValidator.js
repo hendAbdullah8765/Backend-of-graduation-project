@@ -41,7 +41,7 @@ exports.signupValidator = [
   check('passwordConfirm')
   .notEmpty().withMessage('password confirm required'),
   
-  check('profileImg').optional(), 
+  check('image').optional(), 
 
   check('phone').optional().isMobilePhone(['ar-EG','ar-SA'])
   .withMessage('invalid phone numper only accepted Egy and SA phone numbers'),
