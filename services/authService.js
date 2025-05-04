@@ -40,7 +40,7 @@ exports.resizeImage = asyncHandler(async (req, res, next) => {
 // @route Get /api/v1/auth/signup
 // @access Public
 exports.signup = asyncHandler(async (req, res, next) => {
-  const { name, email, password, phone, role,address, currentChildren } = req.body;
+  const { name, email, password, phone, role,address,image, currentChildren } = req.body;
 
   // 1- Create the user
   const user = await User.create({
