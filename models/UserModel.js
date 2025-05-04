@@ -55,6 +55,7 @@ location: {
 }, 
 {timestamps: true}
 );
+UserSchema.index({ address: "2dsphere" });
 const setImageURL = (doc)=>{
   if(doc.profileImg){
     const imageUrl =`${process.env.BASE_URL}/upload/users/${doc.profileImg}`
