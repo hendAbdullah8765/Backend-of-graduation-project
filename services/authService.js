@@ -7,75 +7,46 @@ const sendEmail = require("../utils/sendEmail");
 const GenerateToken = require("../utils/createToken");
 const User = require("../models/UserModel");
 const Orphanage = require("../models/OrphanageModel");
-const axios = require("axios"); 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY; 
 
 // @desc  signup
 // @route Get /api/v1/auth/signup
 // @access Public
 exports.signup = asyncHandler(async (req, res, next) => {
-  const { name, email, password, phone, role, address, currentChildren } = req.body;
+  const { name, email, password, phone, role,address, currentChildren } = req.body;
 
-  if (!address) {
-    return next(new ApiError("Address is required", 400));
-  }
-
-  //  1- Get coordinates from Google Maps API
-  const response = await axios.get("https://maps.googleapis.com/maps/api/geocode/json", {
-    params: {
-      address,
-      key: GOOGLE_API_KEY,
-    },
-  });
-
-  const geo = response.data.results[0]?.geometry?.location;
-  if (!geo) {
-    return next(new ApiError("Unable to get location from address", 500));
-  }
-
-  const coordinates = [geo.lng, geo.lat];
-
-  //  2- Create the user with location field
+  // 1- Create the user
   const user = await User.create({
     name,
     email,
     password,
     phone,
     address,
-    location: {
-      type: "Point",
-      coordinates: coordinates,
-    },
     role: role || "Donor",
   });
 
   let orphanage = null;
 
-  //  3- If role is Orphanage, create it with location too
+  // 2- Orphanage
   if (role === "Orphanage") {
     orphanage = await Orphanage.create({
       name,
       email,
       phone,
       address,
-      location: {
-        type: "Point",
-        coordinates: coordinates,
-      },
       currentChildren,
       admin: user._id,
     });
   }
-
-  //  4- Generate token
+  //3- Generate Token
   const token = GenerateToken(user._id);
 
-  //  5- Send response
+  // 4- Response
   res.status(201).json({
     data: { user, orphanage },
     token,
   });
 });
+
 // @desc  login
 // @route Get /api/v1/auth/login
 // @access Public
