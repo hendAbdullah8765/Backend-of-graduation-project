@@ -18,7 +18,10 @@ const userSchema = new mongoose.Schema({
    lowercase: true,
   },
   phone: String,
-  profileImg: String,
+    image: {
+      type: String,
+      required: false,
+    },
 
   password:{
     type: String,
@@ -47,9 +50,9 @@ address: {
 {timestamps: true}
 );
 const setImageURL = (doc)=>{
-  if(doc.profileImg){
-    const imageUrl =`${process.env.BASE_URL}/upload/users/${doc.profileImg}`
-    doc.profileImg = imageUrl;
+  if(doc.image){
+    const imageUrl =`${process.env.BASE_URL}/upload/users/${doc.image}`
+    doc.image = imageUrl;
   }
 }
 // getAll / update / getOne
