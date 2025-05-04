@@ -26,7 +26,10 @@ const orphanageSchema = new mongoose.Schema({
     type : Boolean,
     default: true
   },
-location: String
+address: {
+  type: String,
+  required: true,
+},
 }, 
 {timestamps: true}
 );
