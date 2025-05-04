@@ -1,3 +1,5 @@
+const sharp = require ('sharp');
+const {v4: uuidv4} = require('uuid');
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -15,6 +17,25 @@ const Notification = require('../models/NotificationModel')
 const Setting =require('../models/SettingsModel')
 const Child = require('../models/ChildModel')
 const Message = require('../models/MessageModel')
+const {uploadSingleImage} = require ('../middlewares/uploadImagesMiddleware')
+
+//upload single image
+exports.uploadUserImage = uploadSingleImage("image");
+
+//image processing
+
+exports.resizeImage = asyncHandler(async (req, res, next) => {
+  if (req.file ) {
+    const imageFileName = `users-${uuidv4()}-${Date.now()}.jpeg`;
+    await sharp(req.file.buffer)
+      .resize(500, 500)
+      .toFormat("jpeg")
+      .jpeg({ quality: 90 })
+      .toFile(`upload/users/${imageFileName}`);
+    req.body.image = imageFileName;
+  }
+  next();
+});
 // @desc  signup
 // @route Get /api/v1/auth/signup
 // @access Public
@@ -28,6 +49,7 @@ exports.signup = asyncHandler(async (req, res, next) => {
     password,
     phone,
     address,
+    image,
     role: role || "Donor",
   });
 
@@ -41,6 +63,7 @@ exports.signup = asyncHandler(async (req, res, next) => {
       phone,
       address,
       currentChildren,
+      image,
       admin: user._id,
     });
   }
