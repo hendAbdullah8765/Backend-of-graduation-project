@@ -42,6 +42,7 @@ router.put(
 
 router.put(
   "/updateMe",
+  uploadUserImage, resizeImage,
   authService.protect,
   updateLoggedUserValidator,
   updateLoggedUserData
@@ -62,10 +63,10 @@ router.put(
 router
   .route("/")
   .post(
-    authService.protect,
-    authService.allowedTo("admin"),
     uploadUserImage,
     resizeImage,
+    authService.protect,
+    authService.allowedTo("admin"),
     createUserValidator,
     createUser
   )
@@ -80,10 +81,10 @@ router
   .route("/:id")
   .get(getUserValidator, getUser)
   .put(
-    authService.protect,
-    authService.allowedTo("admin"),
     uploadUserImage,
     resizeImage,
+    authService.protect,
+    authService.allowedTo("admin"),
     updateUserValidator,
     updateUser
   )
