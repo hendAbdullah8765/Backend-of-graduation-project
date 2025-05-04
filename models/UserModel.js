@@ -42,21 +42,10 @@ address: {
   type: String,
   required: true,
 },
-location: {
-  type: {
-    type: String,
-    enum: ['Point'],
-    default: 'Point',
-  },
-  coordinates: {
-    type: [Number], // [lng, lat]
-  },
-}
 
 }, 
 {timestamps: true}
 );
-userSchema.index({ address: "2dsphere" });
 const setImageURL = (doc)=>{
   if(doc.profileImg){
     const imageUrl =`${process.env.BASE_URL}/upload/users/${doc.profileImg}`
