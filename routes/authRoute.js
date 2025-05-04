@@ -16,9 +16,8 @@ router.route('/verifyResetCode').post(verifyPassResetCode)
 router.route('/signup').post(
       uploadUserImage, resizeImage,
     signupValidator, signup)
-router.route('/login').post(
-uploadUserImage, resizeImage,
-loginValidator, login)
+
+router.route('/login').post(loginValidator, login)
 router.route('/resetPassword').put(resetPassword)
 
 // .get(getUsers);
