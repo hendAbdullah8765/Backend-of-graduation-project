@@ -11,7 +11,7 @@ const orphanageSchema = new mongoose.Schema({
     required: true
   },
  
-  profileImg: {
+  image: {
     type: String 
   },
   slug: {
@@ -35,9 +35,9 @@ address: {
 );
 
 const setImageURL = (doc)=>{
-  if(doc.PrfileImg){
-    const imageUrl =`${process.env.BASE_URL}/upload/orphanage/${doc.PrfileImg}`
-    doc.PrfileImg = imageUrl;
+  if(doc.image){
+    const imageUrl =`${process.env.BASE_URL}/upload/users/${doc.image}`
+    doc.image = imageUrl;
   }
 
 }
