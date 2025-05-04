@@ -38,16 +38,20 @@ const userSchema = new mongoose.Schema({
     type : Boolean,
     default: true
   },
-  address: {
+address: {
+    type: String,
+    required: true
+  },
+location: {
     type: {
-      type: String,
+      type: String, // "Point"
       enum: ['Point'],
-      default: 'Point',
-    }, 
+    },
     coordinates: {
       type: [Number], // [longitude, latitude]
+
     },
-  }
+  },
 }, 
 {timestamps: true}
 );
