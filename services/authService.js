@@ -109,9 +109,8 @@ exports.login = asyncHandler(async (req, res, next) => {
     data: {
       user:{
         ...user.toObject(),
-        profilePicture: user.profileImg, // إضافة صورة البروفايل إن وجدت
+        profilePicture: user.image,
       },
-      token,
       posts,
       children,
       requests,
