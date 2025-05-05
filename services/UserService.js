@@ -135,6 +135,7 @@ exports.updateLoggedUserPassword = asyncHandler(async(req, res, next) => {
     establishedDate,
     birthdate,
     image,
+    gender
   } = req.body;
 
   const updatedUser = await User.findByIdAndUpdate(req.user._id, {
@@ -144,6 +145,7 @@ exports.updateLoggedUserPassword = asyncHandler(async(req, res, next) => {
     address,
     birthdate,
     image,
+    gender
   }, { new: true });
 
   if (updatedUser.role === 'Orphanage') {
