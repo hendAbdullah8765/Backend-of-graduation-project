@@ -137,7 +137,10 @@ exports.updateLoggedUserPassword = asyncHandler(async(req, res, next) => {
     image,
     gender
   } = req.body;
-
+   const workSchedule = {
+    workDays: workDays || [],
+    workHours: workHours || [],
+  };
   const updatedUser = await User.findByIdAndUpdate(req.user._id, {
     name,
     email,
