@@ -14,7 +14,10 @@ exports.createUserValidator = [
         req.body.slug = slugify(val);
         return true;
     }),
-
+    check('gender').optional()
+          .notEmpty().withMessage('Gender is required')
+          .isIn(['male', 'female']).withMessage('Gender must be male or female'), 
+      
   check('email')
     .notEmpty().withMessage('User email is required')
     .isEmail().withMessage("invalid email address")
@@ -182,6 +185,10 @@ exports.updateLoggedUserValidator = [
          return Promise.reject(new Error('E-mail already in use for orphanage'));
        }
    })),
+   check('gender').optional()
+          .notEmpty().withMessage('Gender is required')
+          .isIn(['male', 'female']).withMessage('Gender must be male or female'), 
+      
   // phone
   check('phone').optional()
     .isMobilePhone(['ar-EG', 'ar-SA'])
