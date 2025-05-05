@@ -56,6 +56,7 @@ exports.signup = asyncHandler(async (req, res, next) => {
     establishedDate,
     birthdate,
     image,
+    gender,
     role
    } = req.body;
    
@@ -72,6 +73,7 @@ exports.signup = asyncHandler(async (req, res, next) => {
     address,
     image,
     birthdate,
+    gender,
     role: role || "Donor",
   });
 
