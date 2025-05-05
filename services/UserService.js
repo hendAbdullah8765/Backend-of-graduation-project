@@ -1,32 +1,30 @@
-const bcrypt = require('bcryptjs');
 const sharp = require ('sharp');
+const bcrypt = require('bcryptjs');
 const {v4: uuidv4} = require('uuid');
 const asyncHandler = require ('express-async-handler')
 const factory = require('./handlerFactory');
 const User = require('../models/UserModel');
 const ApiError = require('../utils/ApiError');
 const GenerateToken = require('../utils/createToken')
-
 const {uploadSingleImage} = require ('../middlewares/uploadImagesMiddleware')
 
 //upload single image
 exports.uploadUserImage = uploadSingleImage("image");
 
 //image processing
-exports.resizeImage =asyncHandler(async (req , res, next) => {
- const filename = `user-${uuidv4()}-${Date.now()}.jpeg`;
- if(req.file){
-   sharp(req.file.buffer)
-   .resize(500 , 500)
-   .toFormat("jpeg")
-   .jpeg({ quality: 90 })
-   .toFile(`upload/users/${filename}`);
+exports.resizeImage = asyncHandler(async (req, res, next) => {
+  if (req.file ) {
+    const imageFileName = `users-${uuidv4()}-${Date.now()}.jpeg`;
+    await sharp(req.file.buffer)
+      .resize(500, 500)
+      .toFormat("jpeg")
+      .jpeg({ quality: 90 })
+      .toFile(`upload/users/${imageFileName}`);
+    req.body.image = imageFileName;
+  }
+  next();
+});
 
-   //save image into our db
-  req.body.image = filename;
- }   
-  next();  
-})
 
    // @desc  get list of users
    // @route Get /api/v1/users
@@ -54,7 +52,7 @@ exports.updateUser = asyncHandler(async (req, res, next) => {
       slug: req.body.slug,
       phone: req.body.phone,
       email: req.body.email,
-      profileImg: req.body.profileImg,
+      image: req.body.image,
       role: req.body.role
    },
    {
@@ -121,15 +119,63 @@ exports.updateLoggedUserPassword = asyncHandler(async(req, res, next) => {
   // @desc  update logged user data(without role , password)
  // @route put /api/v1/users/updateMe
  // @access private
-exports.updateLoggedUserData = asyncHandler(async(req, res, next) =>{
-  const updatedUser = await User.findByIdAndUpdate(req.user._id , {
-    name: req.body.name,
-    phone: req.body.phone,
-    profileImg: req.body.profileImg
-  } , {new: true}
- )
- res.status(200).json({ data: updatedUser})
- })
+ exports.updateLoggedUserData = asyncHandler(async (req, res, next) => {
+  const {
+    name,
+    adminName,
+    email,
+    phone,
+    address,
+    currentChildren,
+    totalCapacity,
+    staffCount,
+    workDays,
+    workHours,
+    establishedDate,
+    birthdate,
+    image
+  } = req.body;
+
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      name,
+      email,
+      phone,
+      address,
+      birthdate,
+      image
+    },
+    { new: true }
+  );
+
+  if (req.user.role === "Orphanage" && updatedUser.orphanage) {
+    await Orphanage.findByIdAndUpdate(
+      updatedUser.orphanage,
+      {
+        name,
+        adminName,
+        email,
+        phone,
+        address,
+        currentChildren,
+        totalCapacity,
+        staffCount,
+        establishedDate,
+        birthdate,
+        image,
+        workSchedule: {
+          workDays: workDays || [],
+          workHours: workHours || []
+        }
+      },
+      { new: true }
+    );
+  }
+
+  res.status(200).json({ data: updatedUser });
+});
+
 
  // @desc  Deactivate logged user
  // @route Delete /api/v1/users/deleteme
