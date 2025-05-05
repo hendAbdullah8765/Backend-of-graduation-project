@@ -98,8 +98,10 @@ exports.signup = asyncHandler(async (req, res, next) => {
       image
         });       
   }
+if (orphanage) {
   user.orphanage = orphanage._id;
   await user.save(); 
+}
   //3- Generate Token
   const token = GenerateToken(user._id);
 
