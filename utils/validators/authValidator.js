@@ -14,7 +14,10 @@ check('role').optional().isIn(['Orphanage', 'Donor']).withMessage('Invalid role'
         req.body.slug = slugify(val);
         return true;
     }),
-
+    check('gender').optional()
+          .notEmpty().withMessage('Gender is required')
+          .isIn(['male', 'female']).withMessage('Gender must be male or female'), 
+      
   check('email')
     .notEmpty().withMessage('User email is required')
     .isEmail().withMessage("invalid email address")
