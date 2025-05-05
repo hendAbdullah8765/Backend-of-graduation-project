@@ -26,7 +26,7 @@ check('role').optional().isIn(['Orphanage', 'Donor']).withMessage('Invalid role'
     })) 
     .custom((val,{req}) =>
       Orphanage.findOne({ email: val }).then((user) => {
-       if (user && req.body.role === 'Orphanage') { // لو الدور هو "دار أيتام"
+       if (user && req.body.role === 'Orphanage') { 
          return Promise.reject(new Error('E-mail already in use for orphanage'));
        }
    })),
