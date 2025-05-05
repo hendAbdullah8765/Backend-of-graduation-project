@@ -6,6 +6,7 @@ const User = require('../../models/UserModel')
 const Orphanage =require('../../models/OrphanageModel')
 
 exports.createUserValidator = [
+  check('role').isIn(['Orphanage', 'Donor']).withMessage('Invalid role'), 
   check('name')
     .notEmpty().withMessage('User name is required')
     .isLength({ min: 2 }).withMessage('User name is too short')
@@ -46,9 +47,40 @@ exports.createUserValidator = [
 
   check('phone').optional().isMobilePhone(['ar-EG','ar-SA'])
   .withMessage('invalid phone numper only accepted Egy and SA phone numbers'),
- 
-  check('role').optional().isIn(['Orphanage', 'Donor']).withMessage('Invalid role'), 
-    
+
+
+  check('adminName').if(body('role').equals('Orphanage'))
+    .not().isEmpty().withMessage('Name is required for Orphanage role'),
+
+  check('currentChildren').if(body('role').equals('Orphanage'))
+    .isInt({ min: 0 }).withMessage('CurrentChildren must be a non-negative number'),
+
+  check('totalCapacity').if(body('role').equals('Orphanage'))
+    .isInt({ min: 1 }).withMessage('TotalCapacity must be at least 1'),
+
+  check('staffCount').if(body('role').equals('Orphanage'))
+    .isInt({ min: 0 }).withMessage('StaffCount must be a non-negative number'),
+
+  check('establishedDate').if(body('role').equals('Orphanage'))
+    .notEmpty().withMessage('EstablishedDate is required')
+    .isISO8601().withMessage('Invalid date format'),
+  check('birthdate').isDate().notEmpty()
+    .withMessage('Birthdate is required'),
+  check('workSchedule.workDays').optional().isArray().withMessage('workDays must be an array')
+    .custom((val) => {
+      const validDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const invalid = val.some(day => !validDays.includes(day));
+      if (invalid) throw new Error('Invalid work day');
+      return true;
+    }),
+
+  check('workSchedule.workHours').optional().isArray().withMessage('workHours must be an array')
+    .custom((val) => {
+      const validHours = ['Morning 6am-12pm', 'Afternoon 12pm-4pm', 'Evening 4pm-8pm', 'Night 8pm-12am'];
+      const invalid = val.some(hr => !validHours.includes(hr));
+      if (invalid) throw new Error('Invalid work hour');
+      return true;
+    }),  
 
   validatorMiddleware
 ];
@@ -66,7 +98,7 @@ exports.updateUserValidator = [
      req.body.slug = slugify(val);
       return true;
   }),
-  check('email').optional()
+  check('email')
   .notEmpty().withMessage('User email is required')
   .isEmail().withMessage("invalid email address")
   .custom((val) =>
@@ -75,13 +107,13 @@ exports.updateUserValidator = [
         return Promise.reject(new Error('E-mail already in user')); 
        }
   })
- ),  
+ ).optional(), 
+
  check('image').optional(), 
 
  check('phone').optional().isMobilePhone(['ar-EG','ar-SA'])
  .withMessage('invalid phone numper only accepted Egy and SA phone numbers'),
 
- check('role').optional(), 
    
 
     validatorMiddleware
@@ -126,26 +158,74 @@ exports.deleteUserValidator = [
   validatorMiddleware
 ];
 
+
 exports.updateLoggedUserValidator = [
-  body('name').optional()
-  .custom((val, { req }) => {
-     req.body.slug = slugify(val);
-      return true;
+  // name & slug
+  body('name').optional().custom((val, { req }) => {
+    req.body.slug = slugify(val);
+    return true;
   }),
+
+  // email
   check('email').optional()
-  .notEmpty().withMessage('User email is required')
-  .isEmail().withMessage("invalid email address")
-  .custom((val) =>
-     User.findOne({email: val}).then((user) => {
-      if(user){
-        return Promise.reject(new Error('E-mail already in user')); 
+    .notEmpty().withMessage('User email is required')
+    .isEmail().withMessage("invalid email address")
+    .custom((val) =>
+       User.findOne({email: val}).then((user) => {
+        if(user){
+          return Promise.reject(new Error('E-mail already in user')); 
+         }
+    })) 
+    .custom((val,{req}) =>
+      Orphanage.findOne({ email: val }).then((user) => {
+       if (user && req.body.role === 'Orphanage') { 
+         return Promise.reject(new Error('E-mail already in use for orphanage'));
        }
-  })
- ),  
- check('image').optional(), 
+   })),
+  // phone
+  check('phone').optional()
+    .isMobilePhone(['ar-EG', 'ar-SA'])
+    .withMessage('Invalid phone number. Only Egyptian and Saudi numbers are allowed.'),
 
- check('phone').optional().isMobilePhone(['ar-EG','ar-SA'])
- .withMessage('invalid phone numper only accepted Egy and SA phone numbers'),
+  // image
+  check('image').optional(),
 
- validatorMiddleware
+  // adminName
+  check('adminName').optional().isString().withMessage('adminName must be a string'),
+
+  // currentChildren
+  check('currentChildren').optional().isInt({ min: 0 }).withMessage('currentChildren must be a non-negative integer'),
+
+  // totalCapacity
+  check('totalCapacity').optional().isInt({ min: 0 }).withMessage('totalCapacity must be a non-negative integer'),
+
+  // staffCount
+  check('staffCount').optional().isInt({ min: 0 }).withMessage('staffCount must be a non-negative integer'),
+
+  // workDays
+  check('workDays').optional().isArray().withMessage('workDays must be an array')
+    .custom((val) => {
+      const validDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const invalid = val.some(day => !validDays.includes(day));
+      if (invalid) throw new Error('Invalid work day');
+      return true;
+    }),
+
+  // workHours
+  check('workHours').optional().isArray().withMessage('workHours must be an array')
+    .custom((val) => {
+      const validHours = ['Morning 6am-12pm', 'Afternoon 12pm-4pm', 'Evening 4pm-8pm', 'Night 8pm-12am'];
+      const invalid = val.some(hour => !validHours.includes(hour));
+      if (invalid) throw new Error('Invalid work hour');
+      return true;
+    }),
+
+  // establishedDate
+  check('establishedDate').optional().isISO8601().toDate().withMessage('Invalid establishedDate'),
+
+  // birthdate
+  check('birthdate').optional().isISO8601().toDate().withMessage('Invalid birthdate'),
+
+  validatorMiddleware,
 ];
+
