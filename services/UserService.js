@@ -4,6 +4,7 @@ const {v4: uuidv4} = require('uuid');
 const asyncHandler = require ('express-async-handler')
 const factory = require('./handlerFactory');
 const User = require('../models/UserModel');
+const Orphanage = require('../models/OrphanageModel')
 const ApiError = require('../utils/ApiError');
 const GenerateToken = require('../utils/createToken')
 const {uploadSingleImage} = require ('../middlewares/uploadImagesMiddleware')
@@ -120,60 +121,55 @@ exports.updateLoggedUserPassword = asyncHandler(async(req, res, next) => {
  // @route put /api/v1/users/updateMe
  // @access private
  exports.updateLoggedUserData = asyncHandler(async (req, res, next) => {
-  const {
+  const {   
     name,
-    adminName,
+    adminName, 
     email,
     phone,
     address,
     currentChildren,
     totalCapacity,
     staffCount,
-    workDays,
+    workDays,          
     workHours,
     establishedDate,
     birthdate,
-    image
+    image,
   } = req.body;
 
-  const updatedUser = await User.findByIdAndUpdate(
-    req.user._id,
-    {
-      name,
-      email,
-      phone,
-      address,
-      birthdate,
-      image
-    },
-    { new: true }
-  );
+  const updatedUser = await User.findByIdAndUpdate(req.user._id, {
+    name,
+    email,
+    phone,
+    address,
+    birthdate,
+    image,
+  }, { new: true });
 
-  if (req.user.role === "Orphanage" && updatedUser.orphanage) {
-    await Orphanage.findByIdAndUpdate(
-      updatedUser.orphanage,
-      {
-        name,
-        adminName,
-        email,
-        phone,
-        address,
-        currentChildren,
-        totalCapacity,
-        staffCount,
-        establishedDate,
-        birthdate,
-        image,
-        workSchedule: {
-          workDays: workDays || [],
-          workHours: workHours || []
-        }
+  if (updatedUser.role === 'Orphanage') {
+    const updatedOrphanage = await Orphanage.findByIdAndUpdate(updatedUser.orphanage, {
+      adminName,
+      currentChildren,
+      totalCapacity,
+      staffCount,
+      workSchedule: {
+        workDays,
+        workHours,
       },
-      { new: true }
-    );
+      establishedDate,
+    }, { new: true });
+
+    return res.status(200).json({
+      data: {
+        user: updatedUser,
+        orphanage: updatedOrphanage,
+      },
+    });
   }
 
-  res.status(200).json({ data: updatedUser });
+  res.status(200).json({
+    data: updatedUser,
+  });
 });
 
 
