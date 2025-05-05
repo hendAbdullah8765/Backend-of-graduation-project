@@ -1,6 +1,6 @@
+const crypto = require("crypto");
 const sharp = require ('sharp');
 const {v4: uuidv4} = require('uuid');
-const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
@@ -36,20 +36,42 @@ exports.resizeImage = asyncHandler(async (req, res, next) => {
   }
   next();
 });
+
 // @desc  signup
 // @route Get /api/v1/auth/signup
 // @access Public
 exports.signup = asyncHandler(async (req, res, next) => {
-  const { name, email, password, phone, role,address,image, currentChildren } = req.body;
-
+  const {   
+    name,
+    password,
+    adminName , 
+    email,
+    phone,
+    address,
+    currentChildren,
+    totalCapacity,
+    staffCount,
+    workDays,          
+    workHours,
+    establishedDate,
+    birthdate,
+    image,
+    role
+   } = req.body;
+   
+   const workSchedule = {
+    workDays: workDays || [],
+    workHours: workHours || [],
+  };
   // 1- Create the user
   const user = await User.create({
     name,
-    email,
+    email ,
     password,
     phone,
     address,
     image,
+    birthdate,
     role: role || "Donor",
   });
 
@@ -59,14 +81,25 @@ exports.signup = asyncHandler(async (req, res, next) => {
   if (role === "Orphanage") {
     orphanage = await Orphanage.create({
       name,
+      adminName , 
       email,
+    password,
       phone,
       address,
       currentChildren,
-      image,
-      admin: user._id,
-    });
+      totalCapacity,
+      staffCount,
+      workSchedule: {
+        workDays: workSchedule?.workDays || [],
+        workHours: workSchedule?.workHours || [],
+      },
+      establishedDate,
+      birthdate,
+      image
+        });       
   }
+  user.orphanage = orphanage._id;
+  await user.save(); 
   //3- Generate Token
   const token = GenerateToken(user._id);
 
@@ -81,7 +114,8 @@ exports.signup = asyncHandler(async (req, res, next) => {
 // @route Get /api/v1/auth/login
 // @access Public
 exports.login = asyncHandler(async (req, res, next) => {
-  const user = await User.findOne({ email: req.body.email });
+  const user = await User.findOne({ email: req.body.email }).select('+password').populate('orphanage');
+  ;
 
   if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
     return next(new ApiError("Incorrect email or password", 401));
@@ -109,7 +143,7 @@ exports.login = asyncHandler(async (req, res, next) => {
     data: {
       user:{
         ...user.toObject(),
-        profilePicture: user.image,
+        profilePicture: user.image, // إضافة صورة البروفايل إن وجدت
       },
       posts,
       children,
@@ -141,20 +175,13 @@ exports.protect = asyncHandler(async (req, res, next) => {
       )
     );
   }
-  if (User.active === false) {
-    return next(
-      new ApiError(
-        "This user has been deactivated. Please contact support.",
-        401
-      )
-    );
-  }
+
   //2- verify token (no change happens, expired token)
   const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
   console.log(decoded);
   // 3- check if user exist
   const currentUser = await User.findById(decoded.userId);
-  if (!currentUser) {
+  if (!currentUser || currentUser.active === false) {
     return next(
       new ApiError(
         "The user that belong to this token does no longer exist",
