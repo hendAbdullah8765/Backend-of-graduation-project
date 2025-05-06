@@ -13,7 +13,8 @@ const {
     deleteReaction,
     setPostIdToBody,
     createFilterObj ,
-    createFilterObject 
+    createFilterObject,
+    allowedToModifyReaction
   } = require('../services/ReactionService');
  const authService = require('../services/authService')
 
@@ -30,6 +31,6 @@ router
 router
 .route('/:id')
 .get(getReactionValidator,getReactions)
-.put(updateReactionValidator ,updateReaction)
-.delete(deleteReactionValidator ,deleteReaction);
+.put(authService.protect,allowedToModifyReaction,updateReactionValidator ,updateReaction)
+.delete(authService.protect,allowedToModifyReaction,deleteReactionValidator ,deleteReaction);
 module.exports = router;
