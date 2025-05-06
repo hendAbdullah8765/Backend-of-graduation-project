@@ -15,6 +15,7 @@ exports.uploadPostImages = uploadMixOfImages([
   maxCount : 5 
 }
 ])
+
 //image processing 
 exports.resizePostImages = asyncHandler(async (req, res, next) => {
   if (req.files && req.files.image) {
@@ -45,28 +46,58 @@ exports.resizePostImages = asyncHandler(async (req, res, next) => {
   next();  
 });
 
+exports.setUserIdToBody = (req, res, next) => {
+  if (!req.body.user && req.user) {
+    req.body.user = req.user._id;
+  }
+  next();
+};
+
+exports.allowedToModifyPost = asyncHandler(async (req, res, next) => {
+  const post = await Post.findById(req.params.id);
+  if (!post) {
+    return next(new ApiError('Post not found', 404));
+  }
+
+  if (post.user.toString() !== req.user._id.toString()) {
+    return next(new ApiError('You are not allowed to modify this post', 403));
+  }
+
+  next();
+});
+
 // @desc  get list of Post
 // @route Get /api/v1/posts
 // @access Public
-exports.getPosts = factory.getAll(Post , 'Post');
-
+exports.getPosts = factory.getAll(Post, 'Post', {
+  path: 'user',
+  select: 'name'
+})
 
 // @desc  get spacific Post by id
 // @route Get /api/v1/posts/:id  
 // @access Public
-exports.getPost = factory.getOne(Post);
-  
+exports.getPost = factory.getOne(Post, {
+  path: 'user',
+  select: 'name'
+});  
 // @desc  create Post
 // @route Post /api/v1/posts 
 // @access Private
-exports.createPost = factory.createOne(Post);
+exports.createPost = factory.createOne(Post, {
+  path: 'user',
+  select: 'name'
+});
 
 
 // @desc  update spacific Post
 // @route Put /api/v1/posts/:id
 // @access Public
 
-exports.updatePost = factory.updateOne(Post);
+exports.updatePost = factory.updateOne(Post, {
+  path: 'user',
+  select: 'name'
+});
 
 
 // @desc  delete spacific Post
