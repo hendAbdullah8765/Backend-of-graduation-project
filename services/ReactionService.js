@@ -1,116 +1,106 @@
-const asyncHandler = require("express-async-handler");
-// const slugify = require('slugify');
-const Reaction = require("../models/ReactionModel");
+const sharp = require ('sharp');
+const {v4: uuidv4} = require('uuid');
+const asyncHandler = require ('express-async-handler')
 const factory = require('./handlerFactory');
-const ApiError = require("../utils/ApiError");
-
-// nested route
-// Get /api/v1/posts/:postId/reactions
-exports.createFilterObj = (req , res , next) => {
-  let filterObject = {};
-  if(req.params.postId) filterObject = { post: req.params.postId};
-   req.filterObj = filterObject;
-    next();
+const Post = require("../models/PostModel");
+const {uploadMixOfImages} = require ('../middlewares/uploadImagesMiddleware')
+//upload single image
+exports.uploadPostImages = uploadMixOfImages([
+  {
+  name : 'image',
+  maxCount : 1
+},
+{
+  name : 'images',
+  maxCount : 5 
 }
+])
 
-// nested route
-// Get /api/v1/users/:userId/reactions
-exports.createFilterObject = (req , res , next) => {
-  let filterObject = {};
-  if(req.params.userId) filterObject = { user: req.params.userId};
-   req.filterObj = filterObject;
-    next();
-}
-
-exports.allowedToModifyReaction = asyncHandler(async (req, res, next) => {
-  const reaction = await Reaction.findById(req.params.id);
-  if (!reaction) {
-    return next(new ApiError('Reaction not found', 404));
+//image processing 
+exports.resizePostImages = asyncHandler(async (req, res, next) => {
+  if (req.files && req.files.image) {
+    const imageFileName = `post-${uuidv4()}-${Date.now()}.jpeg`;
+    await sharp(req.files.image[0].buffer)
+      .resize(2000, 1333)
+      .toFormat("jpeg")
+      .jpeg({ quality: 90 })
+      .toFile(`upload/posts/${imageFileName}`);
+    req.body.image = imageFileName;
   }
 
-  if (reaction.user.toString() !== req.user._id.toString()) {
-    return next(new ApiError('You are not allowed to modify this reaction', 403));
+  if (req.files && req.files.images) {
+    req.body.images = [];
+    await Promise.all(
+      req.files.images.map(async (img, index) => {
+        const imageName = `post-${uuidv4()}-${Date.now()}-${index + 1}.jpeg`;
+        await sharp(img.buffer)
+          .resize(2000, 1333)
+          .toFormat("jpeg")
+          .jpeg({ quality: 90 })
+          .toFile(`upload/posts/${imageName}`);
+        req.body.images.push(imageName);
+      })
+    );
   }
 
-  next();
+  next();  
 });
 
-// @desc  get list of reaction
-// @route Get /api/v1/reaction
-// @access Public
-exports.getReactions = factory.getAll(Reaction, {
-  path: 'user post',
-  select: 'name email content'
-});
-
-  
-exports.setPostIdToBody = (req, res, next) => {
-  // nested route
-  if (!req.body.post) req.body.post = req.params.postId;
+exports.setUserIdToBody = (req, res, next) => {
+  if (!req.body.user && req.user) {
+    req.body.user = req.user._id;
+  }
   next();
 };
 
-// @desc  Create or Update Reaction (Smart Management)
-// @route POST /api/v1/reactions
-// @access Private
-exports.createReaction = asyncHandler(async (req, res) => {
-  const { type, post } = req.body;
-  const user = req.user._id;
-
-  const existingReaction = await Reaction.findOne({ user, post });
-
-  if (existingReaction) {
-    existingReaction.type = type;
-    await existingReaction.save();
-    await existingReaction.populate([
-      { path: 'user', select: 'name' },
-      { path: 'post', select: 'content' }
-    ]);
-    return res
-      .status(200)
-      .json({ message: "Reaction updated", data: existingReaction });
+exports.allowedToModifyPost = asyncHandler(async (req, res, next) => {
+  const post = await Post.findById(req.params.id);
+  if (!post) {
+    return next(new ApiError('Post not found', 404));
   }
 
-  const reaction = await Reaction.create({ type, post, user });
-  await reaction.populate([
-    { path: 'user', select: 'name' },
-    { path: 'post', select: 'content' }
-  ]);
-
-  res.status(201).json({ message: "Reaction added", data: reaction });
-});
-
-// @desc  Update Reaction (if not found, create it)
-// @route PUT /api/v1/reactions/:id
-// @access Private
-exports.updateReaction = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const { type } = req.body;
-  const reaction = await Reaction.findByIdAndUpdate(
-    id,
-    { type },
-    { new: true }
-  ).populate([
-    { path: 'user', select: 'name' },
-    { path: 'post', select: 'content' }
-  ]);
-
-  if (!reaction) {
-    return next(new ApiError('Reaction not found', 404));
+  if (post.user.toString() !== req.user._id.toString()) {
+    return next(new ApiError('You are not allowed to modify this post', 403));
   }
 
-  res.status(200).json({ message: "Reaction updated", data: reaction });
+  next();
 });
 
-// @desc  delete spacific reaction
-// @route delete /api/v1/reactions/:id
+// @desc  get list of Post
+// @route Get /api/v1/posts
 // @access Public
-exports.deleteReaction = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const reaction = await Reaction.findByIdAndDelete(id);
+exports.getPosts = factory.getAll(Post, 'Post', {
+  path: 'user',
+  select: 'name'
+})
 
-  if (!reaction) {
-    return exports.createReaction(req, res, next);
-  }
-  res.status(204).send();
+// @desc  get spacific Post by id
+// @route Get /api/v1/posts/:id  
+// @access Public
+exports.getPost = factory.getOne(Post, {
+  path: 'user',
+  select: 'name'
+});  
+// @desc  create Post
+// @route Post /api/v1/posts 
+// @access Private
+exports.createPost = factory.createOne(Post, {
+  path: 'user',
+  select: 'name'
 });
+
+
+// @desc  update spacific Post
+// @route Put /api/v1/posts/:id
+// @access Public
+
+exports.updatePost = factory.updateOne(Post, {
+  path: 'user',
+  select: 'name'
+});
+
+
+// @desc  delete spacific Post
+// @route delete /api/v1/posts/:id
+// @access Public
+exports.deletePost = factory.deleteOne(Post);
