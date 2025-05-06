@@ -21,13 +21,7 @@ const ReactionSchema = new mongoose.Schema({
         default: Date.now
     }
 });
-ReactionSchema.pre(/^find/, function(next){
-    this.populate({
-      path: 'post',
-      select: 'userId'
-    })
-    next();
-  }) 
+
 
 const Reaction = mongoose.model("Reactions", ReactionSchema);
 
