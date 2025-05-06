@@ -8,7 +8,7 @@ const PostSchema = new mongoose.Schema(
          minLength:[1,'Too Short Post content'],
          trim: true,
         },
-    userId: {
+    user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
