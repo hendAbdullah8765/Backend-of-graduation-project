@@ -53,14 +53,14 @@ const orphanageSchema = new mongoose.Schema({
 
   workSchedule: {
     workDays: {
-      type: [String], 
+      type: String, 
       enum: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      default: []
+      
     },
   workHours: {
-      type: [String], 
+      type: String, 
       enum: ['Morning 6am-12pm', 'Afternoon 12pm-4pm', 'Evening 4pm-8pm', 'Night 8pm-12am'],
-      default: []
+
     },
 
   }
