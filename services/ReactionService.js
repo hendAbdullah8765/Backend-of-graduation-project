@@ -38,10 +38,11 @@ exports.allowedToModifyReaction = asyncHandler(async (req, res, next) => {
 // @desc  get list of reaction
 // @route Get /api/v1/reaction
 // @access Public
-exports.getReactions = factory.getAll(Reaction, {
-  path: 'user post',
-  select: 'name content'
-});
+exports.getReactions = factory.getAll(Reaction, [
+  { path: 'user', select: 'name' },
+  { path: 'post', select: 'content' }
+]);
+
 
   
 exports.setPostIdToBody = (req, res, next) => {
