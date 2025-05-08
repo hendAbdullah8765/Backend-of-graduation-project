@@ -32,7 +32,7 @@ exports.createFilterObj = (req , res , next) => {
    // @desc  get list of children
    // @route Get /api/v1/children
    // @access Public
-exports.getChildren = factory.getAll(Child, {
+exports.getChildren = factory.getAll(Child,'Child', {
    path: 'orphanage',
    select: 'name'
  });
