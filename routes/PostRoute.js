@@ -15,9 +15,11 @@ const {
   uploadPostImages,
   resizePostImages,
   setUserIdToBody,
-  allowedToModifyPost
+  allowedToModifyPost,
+  createRepost
 } = require('../services/PostService');
 const authService = require("../services/authService");
+
 
 const router = express.Router();
 
@@ -27,25 +29,35 @@ const ReactionsRoute = require('./ReactionRoute');
 router.use('/:postId/comments', CommentsRoute)
 
 router.use('/:postId/reactions', ReactionsRoute)
+router.post(
+  '/:id/repost',   
+  authService.protect,  
+  createRepost        
+);
 
 router
 .route('/')
 .get(getPosts)
-.post(  uploadPostImages,
+.post( 
+  authService.protect,
+  uploadPostImages,
   resizePostImages,setUserIdToBody,createPostValidator ,createPost)
 
 router
   .route('/:id')
   .get( getPostValidator, getPost)
-  .put(  
+  .put( 
     authService.protect,
     allowedToModifyPost,
-   uploadPostImages,
+    uploadPostImages,
     resizePostImages,
     updatePostValidator 
     ,updatePost)
   
-    .delete(authService.protect,allowedToModifyPost,deletePostValidator ,deletePost);
+    .delete( 
+       authService.protect,
+       allowedToModifyPost,
+      deletePostValidator ,deletePost);
 
 module.exports = router;
 
