@@ -7,6 +7,8 @@ const User = require('../models/UserModel');
 const Orphanage = require('../models/OrphanageModel')
 const ApiError = require('../utils/ApiError');
 const GenerateToken = require('../utils/createToken')
+const Message = require('../models/MessageModel');
+const Post = require('../models/PostModel');
 const {uploadSingleImage} = require ('../middlewares/uploadImagesMiddleware')
 
 //upload single image
@@ -30,12 +32,41 @@ exports.resizeImage = asyncHandler(async (req, res, next) => {
    // @desc  get list of users
    // @route Get /api/v1/users
    // @access private
-exports.getUsers = factory.getAll(User);
+exports.getUsers = factory.getAll(User , 'User');
 
- // @desc  get spacific user by id
- // @route Get /api/v1/users/:id
- // @access private
-exports.getUser = factory.getOne(User);
+
+// @desc  get specific user by id (with posts and messages)
+// @route Get /api/v1/users/:id
+// @access private
+exports.getUser = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.params.id)
+    .select('-password');  
+
+  if (!user) {
+    return next(new ApiError('User not found', 404));
+  }
+
+  const posts = await Post.find({ user: user._id }) 
+    .select('content createdAt'); 
+
+  const messages = await Message.find({
+    $or: [
+      { senderId: req.user._id, receiverId: user._id }, 
+      { senderId: user._id, receiverId: req.user._id }, 
+    ],
+  }).sort({ createdAt: 1 });
+
+
+
+  res.status(200).json({
+    data: {
+      user,
+      posts,  
+      messages, 
+    },
+  });
+});
+
 
 
    // @desc  add user
@@ -134,21 +165,17 @@ exports.updateLoggedUserPassword = asyncHandler(async(req, res, next) => {
     workHours,
     establishedDate,
     birthdate,
+    gender,
     image,
-    gender
   } = req.body;
-   const workSchedule = {
-    workDays: workDays || [],
-    workHours: workHours || [],
-  };
   const updatedUser = await User.findByIdAndUpdate(req.user._id, {
     name,
     email,
     phone,
     address,
     birthdate,
+    gender,
     image,
-    gender
   }, { new: true });
 
   if (updatedUser.role === 'Orphanage') {
