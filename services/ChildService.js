@@ -25,37 +25,49 @@ exports.resizeImage =asyncHandler(async (req , res, next) => {
 // Get /api/v1/Orphanages/:OrphanageId/childs
 exports.createFilterObj = (req , res , next) => {
     let filterObject = {};
-    if(req.params.OrphanageId) filterObject = { Orphanage: req.params.OrphanageId};
+    if(req.params.userId) filterObject = { orphanage: req.params.userId};
      req.filterObj = filterObject;
       next();
   }
    // @desc  get list of children
    // @route Get /api/v1/children
    // @access Public
-exports.getChildren = factory.getAll(Child);
+exports.getChildren = factory.getAll(Child, {
+   path: 'orphanage',
+   select: 'name'
+ });
 
  // @desc  get spacific child by id
  // @route Get /api/v1/childss/:id
  // @access Public
-exports.getChild = factory.getOne(Child);
+exports.getChild = factory.getOne(Child, {
+   path: 'orphanage',
+   select: 'name'
+ });
 // post /api/v1/Orphanages/:OrphanageId/childs
     // nested route
 
 exports.setOrphanageIdToBody =(req, res , next) =>{
-   if (!req.body.orphanage)req.body.orphanage = req.params.orphanageId;
+   if (!req.body.orphanage)req.body.orphanage = req.params.userId;
      next();
   }
 
    // @desc  add child
    // @route child /api/v1/child
    // @access Private
-  exports.addChild = factory.createOne(Child);
+  exports.addChild = factory.createOne(Child, {
+   path: 'orphanage',
+   select: 'name'
+ });
 
    // @desc  update spacific child 
    // @route Put /api/v1/childs/:id
    // @access Private
   
-exports.updateChild = factory.updateOne(Child);
+exports.updateChild = factory.updateOne(Child, {
+   path: 'orphanage',
+   select: 'name'
+ });
 
    // @desc  delete spacific Post 
    // @route delete /api/v1/posts/:id
