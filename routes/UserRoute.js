@@ -1,5 +1,13 @@
 const express = require("express");
 const {
+  createUserValidator,
+  getUserValidator,
+  updateUserValidator,
+  deleteUserValidator,
+  changeUserPasswordValidator,
+  updateLoggedUserValidator,
+} = require("../utils/validators/UserValidator");
+const {
   uploadUserImage,
   resizeImage,
   getUsers,
@@ -16,19 +24,13 @@ const {
 } = require("../services/UserService");
 const authService = require("../services/authService");
 
-const {
-  createUserValidator,
-  getUserValidator,
-  updateUserValidator,
-  deleteUserValidator,
-  changeUserPasswordValidator,
-  updateLoggedUserValidator,
-} = require("../utils/validators/UserValidator");
+
 
 const router = express.Router();
 
 const ReactionsRoute = require('./ReactionRoute');
-
+const childRoute = require('./ChildRoute')
+router.use('/:userId/children',childRoute)
 router.use('/:userId/reactions', ReactionsRoute)
 
 router.get("/getMe", authService.protect, getLoggedUserData, getUser);
@@ -41,8 +43,8 @@ router.put(
 );
 
 router.put(
-  "/updateMe",
-  uploadUserImage, resizeImage,
+  "/updateMe",uploadUserImage,
+  resizeImage,
   authService.protect,
   updateLoggedUserValidator,
   updateLoggedUserData
@@ -62,7 +64,7 @@ router.put(
 
 router
   .route("/")
-  .post(
+  .post(  
     uploadUserImage,
     resizeImage,
     authService.protect,
@@ -73,13 +75,12 @@ router
 
   .get(
     authService.protect,
-    authService.allowedTo("admin", "Orphange", "Donor"),
     getUsers
   );
 
 router
   .route("/:id")
-  .get(getUserValidator, getUser)
+  .get(authService.protect,getUserValidator, getUser)
   .put(
     uploadUserImage,
     resizeImage,
