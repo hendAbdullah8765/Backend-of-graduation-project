@@ -11,18 +11,18 @@ const {
     resizeImage
   } = require('../services/ChildService');
 
-const {
+  const {
     createChildValidator,
     getChildValidator,
     updateChildValidator,
     deleteChildValidator
 } = require('../utils/validators/ChildValidator')
+
 const authService= require('../services/authService') 
 // mergeParams: Allow us to access parameters on other routers
 // ex: We need to access postId from post router
-// const router = express.Router({mergeParams: true });
+const router = express.Router({mergeParams: true });
 
-const router = express.Router();
 router
 .route('/')
 .post(
