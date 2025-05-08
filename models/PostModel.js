@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const PostSchema = new mongoose.Schema(
 {
-       content: {
+    content: {
          type: String,
          required: true,
          minLength:[1,'Too Short Post content'],
@@ -21,10 +21,18 @@ const PostSchema = new mongoose.Schema(
     images:{
       type: [String],
       default: []},
+
+
     slug: {
        type: String
        
-     }
+     },
+     repostedFrom: {
+       type: mongoose.Schema.Types.ObjectId,
+       ref: 'Post',
+       default: null, 
+     },
+     repostCount: { type: Number, default: 0 }, 
 },
     {
       timestamps: true,
@@ -33,13 +41,13 @@ const PostSchema = new mongoose.Schema(
 
 const setImageURL = (doc)=>{
   if(doc.image){
-    const imageUrl =`${process.env.BASE_URL}/upload/posts/${doc.image}`
+    const imageUrl =`${process.env.BASE_URL}/posts/${doc.image}`
     doc.image = imageUrl;
   }
   if(doc.images){
     const imagesList = []
     doc.images.forEach((img) =>{
-      const imageUrl =`${process.env.BASE_URL}/upload/posts/${img}`
+      const imageUrl =`${process.env.BASE_URL}/posts/${img}`
       imagesList.push(imageUrl)
     }) 
     doc.images = imagesList;
