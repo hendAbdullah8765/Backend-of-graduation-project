@@ -1,55 +1,59 @@
 const mongoose = require('mongoose');
 
 const PostSchema = new mongoose.Schema(
-{
+  {
     content: {
-         type: String,
-         required: true,
-         minLength:[1,'Too Short Post content'],
-         trim: true,
-        },
+      type: String,
+      required: false,
+      // minLength: [1, 'Too Short Post content'],
+      trim: true,
+    },
     user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-      },
-   
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+
     image: {
-        type: String,
-        required: false
-      },
-    images:{
+      type: String,
+      required: false
+    },
+
+    images: {
       type: [String],
-      default: []},
+      default: []
+    },
 
 
     slug: {
-       type: String
-       
-     },
-     repostedFrom: {
-       type: mongoose.Schema.Types.ObjectId,
-       ref: 'Post',
-       default: null, 
-     },
-     repostCount: { type: Number, default: 0 }, 
-},
-    {
-      timestamps: true,
-    }
+      type: String
+
+    },
+    repostedFrom: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Post',
+      default: null,
+    },
+    repostCount: { type: Number, default: 0 },
+  },
+  {
+    timestamps: true,
+  }
 );
 
-const setImageURL = (doc)=>{
-  if(doc.image){
-    const imageUrl =`${process.env.BASE_URL}/posts/${doc.image}`
+const setImageURL = (doc) => {
+  if (doc.image) {
+    // const imageUrl = `${process.env.BASE_URL}/posts/${doc.image}`
+    const imageUrl = `/upload/posts/${doc.image}`
     doc.image = imageUrl;
   }
-  if(doc.images){
+  if (doc.images) {
     const imagesList = []
-    doc.images.forEach((img) =>{
-      const imageUrl =`${process.env.BASE_URL}/posts/${img}`
+    doc.images.forEach((img) => {
+      const imageUrl = `/upload/posts/${img}`
+      // const imageUrl = `${process.env.BASE_URL}/posts/${img}`
       imagesList.push(imageUrl)
-    }) 
+    })
     doc.images = imagesList;
   }
 }

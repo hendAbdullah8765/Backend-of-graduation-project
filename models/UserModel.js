@@ -12,15 +12,15 @@ const userSchema = new mongoose.Schema(
       type: String,
       lowercase: true,
     },
-      gender: {
-    type: String,
-    enum: ['male', 'female'],
-    required: false
-  },
-  address: {
-    type: String,
-    required: false,
-  },
+    gender: {
+      type: String,
+      enum: ['male', 'female'],
+      required: false
+    },
+    address: {
+      type: String,
+      required: false,
+    },
 
 
     email: {
@@ -68,7 +68,7 @@ const userSchema = new mongoose.Schema(
 );
 const setImageURL = (doc) => {
   if (doc.image) {
-    const imageUrl = `${process.env.BASE_URL}/users/${doc.image}`;
+    const imageUrl = `/upload/users/${doc.image}`;
     doc.image = imageUrl;
   }
 };

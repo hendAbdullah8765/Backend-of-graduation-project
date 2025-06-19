@@ -21,7 +21,7 @@ const orphanageSchema = new mongoose.Schema({
   slug: {
     type: String
   },
- 
+
   currentChildren: {
     type: Number,
     required: [true, 'Number of children is required'],
@@ -32,8 +32,8 @@ const orphanageSchema = new mongoose.Schema({
     required: [true, 'Total capacity is required'],
     min: 1
   },
-  active:{
-    type : Boolean,
+  active: {
+    type: Boolean,
     default: true
   },
   staffCount: {
@@ -53,24 +53,26 @@ const orphanageSchema = new mongoose.Schema({
 
   workSchedule: {
     workDays: {
-      type: String, 
-      enum: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      
+      type: [String],
+      // enum: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+
     },
-  workHours: {
-      type: String, 
-      enum: ['Morning 6am-12pm', 'Afternoon 12pm-4pm', 'Evening 4pm-8pm', 'Night 8pm-12am'],
+    workHours: {
+      type: [String],
+      // enum: ['Morning 6am-12pm', 'Afternoon 12pm-4pm', 'Evening 4pm-8pm', 'Night 8pm-12am'],
 
     },
 
   }
-}, 
-{timestamps: true}
+},
+  { timestamps: true }
 );
 
 const setImageURL = (doc) => {
   if (doc.image) {
-    const imageUrl = `${process.env.BASE_URL}/users/${doc.image}`;
+    const imageUrl = `/upload/users/${doc.image}`;
+    // const imageUrl = `${process.env.BASE_URL}/users/${doc.image}`;
+
     doc.image = imageUrl;
   }
 };
@@ -84,4 +86,4 @@ orphanageSchema.post("save", (doc) => {
 });
 
 module.exports = mongoose.model('Orphanage', orphanageSchema);
- 
+

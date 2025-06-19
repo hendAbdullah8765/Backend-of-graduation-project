@@ -7,7 +7,7 @@ class ApiFeatures {
     if (this.queryString.keyword) {
       const keyword = this.queryString.keyword;
       const regex = new RegExp(`.*${keyword}.*`, 'i');
-  
+
       if (modelName === 'Post') {
         this.querySearch = {
           $or: [
@@ -16,10 +16,10 @@ class ApiFeatures {
           ],
         };
       }
-       else {
-        this.querySearch  = { name: { $regex: regex } };
+      else {
+        this.querySearch = { name: { $regex: regex } };
       }
-  
+
     }
     return this;
   }
@@ -62,7 +62,7 @@ class ApiFeatures {
   }
 
 
-  
+
 
   paginate(countDocuments) {
     const page = this.queryString.page * 1 || 1;

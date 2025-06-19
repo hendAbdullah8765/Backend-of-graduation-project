@@ -1,6 +1,6 @@
 const crypto = require("crypto");
-const sharp = require ('sharp');
-const {v4: uuidv4} = require('uuid');
+const sharp = require('sharp');
+const { v4: uuidv4 } = require('uuid');
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
@@ -9,15 +9,15 @@ const sendEmail = require("../utils/sendEmail");
 const GenerateToken = require("../utils/createToken");
 const User = require("../models/UserModel");
 const Orphanage = require("../models/OrphanageModel");
-const Post =require('../models/PostModel')
-const AdoptionRequest =require('../models/AdoptionRequestModel')
-const DonationItem =require('../models/DonationItemModel')
+const Post = require('../models/PostModel')
+const AdoptionRequest = require('../models/AdoptionRequestModel')
+const DonationItem = require('../models/DonationItemModel')
 const Donation = require('../models/DonationModel')
 const Notification = require('../models/NotificationModel')
-const Setting =require('../models/SettingsModel')
+const Setting = require('../models/SettingsModel')
 const Child = require('../models/ChildModel')
 const Message = require('../models/MessageModel')
-const {uploadSingleImage} = require ('../middlewares/uploadImagesMiddleware')
+const { uploadSingleImage } = require('../middlewares/uploadImagesMiddleware')
 
 //upload single image
 exports.uploadUserImage = uploadSingleImage("image");
@@ -25,12 +25,12 @@ exports.uploadUserImage = uploadSingleImage("image");
 //image processing
 
 exports.resizeImage = asyncHandler(async (req, res, next) => {
-  if (req.file ) {
+  if (req.file) {
     const imageFileName = `users-${uuidv4()}-${Date.now()}.jpeg`;
-    await sharp(req.file.buffer)
-      .resize(500, 500)
+    await sharp(req.file.buffer).rotate()
+      // .resize(500, 500)
       .toFormat("jpeg")
-      .jpeg({ quality: 90 })
+      .jpeg({ quality: 100 })
       .toFile(`upload/users/${imageFileName}`);
     req.body.image = imageFileName;
   }
@@ -41,33 +41,33 @@ exports.resizeImage = asyncHandler(async (req, res, next) => {
 // @route Get /api/v1/auth/signup
 // @access Public
 exports.signup = asyncHandler(async (req, res, next) => {
-  const {   
+  const {
     name,
     password,
-    adminName , 
+    adminName,
     email,
     phone,
     address,
     currentChildren,
     totalCapacity,
     staffCount,
-    workDays,          
+    workDays,
     workHours,
     establishedDate,
     birthdate,
     image,
     gender,
     role
-   } = req.body;
-   
-   const workSchedule = {
+  } = req.body;
+
+  const workSchedule = {
     workDays: workDays || [],
     workHours: workHours || [],
   };
   // 1- Create the user
   const user = await User.create({
     name,
-    email ,
+    email,
     password,
     phone,
     address,
@@ -83,9 +83,9 @@ exports.signup = asyncHandler(async (req, res, next) => {
   if (role === "Orphanage") {
     orphanage = await Orphanage.create({
       name,
-      adminName , 
+      adminName,
       email,
-    password,
+      password,
       phone,
       address,
       currentChildren,
@@ -98,12 +98,12 @@ exports.signup = asyncHandler(async (req, res, next) => {
       establishedDate,
       birthdate,
       image
-        });       
+    });
   }
-if (orphanage) {
-  user.orphanage = orphanage._id;
-  await user.save(); 
-}
+  if (orphanage) {
+    user.orphanage = orphanage._id;
+    await user.save();
+  }
   //3- Generate Token
   const token = GenerateToken(user._id);
 
@@ -125,7 +125,7 @@ exports.login = asyncHandler(async (req, res, next) => {
     return next(new ApiError("Incorrect email or password", 401));
   }
   const token = GenerateToken(user._id);
-  
+
   const posts = await Post.find({ user: user._id });
   const requests = await AdoptionRequest.find({ orphanage: user._id });
   const donationItems = await DonationItem.find({ userId: user._id }).populate('orphanageId', 'name');
@@ -141,11 +141,11 @@ exports.login = asyncHandler(async (req, res, next) => {
   messages = await Message.find({
     $or: [{ senderId: user._id }, { receiverId: user._id }]
   })
-  .populate('senderId', 'name email') 
-  .populate('receiverId', 'name email'); 
-  res.status(200).json({ 
+    .populate('senderId', 'name email')
+    .populate('receiverId', 'name email');
+  res.status(200).json({
     data: {
-      user:{
+      user: {
         ...user.toObject(),
         profilePicture: user.image, // إضافة صورة البروفايل إن وجدت
       },
@@ -156,9 +156,10 @@ exports.login = asyncHandler(async (req, res, next) => {
       donationItems,
       donation,
       notification,
-      settings 
+      settings
     }
-    , token });
+    , token
+  });
 });
 
 // make sure the user is logged in

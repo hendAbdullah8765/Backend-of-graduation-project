@@ -1,75 +1,75 @@
-const sharp = require ('sharp');
-const {v4: uuidv4} = require('uuid');
-const asyncHandler = require ('express-async-handler')
+const sharp = require('sharp');
+const { v4: uuidv4 } = require('uuid');
+const asyncHandler = require('express-async-handler')
 const factory = require('./handlerFactory');
 const Child = require('../models/ChildModel');
-const {uploadSingleImage} = require ('../middlewares/uploadImagesMiddleware')
+const { uploadSingleImage } = require('../middlewares/uploadImagesMiddleware')
 
 //upload single image
 exports.uploadChildImage = uploadSingleImage("image");
 
 //image processing
-exports.resizeImage =asyncHandler(async (req , res, next) => {
- const filename = `children-${uuidv4()}-${Date.now()}.jpeg`;
-    sharp(req.file.buffer)
-    .resize(500 , 500)
+exports.resizeImage = asyncHandler(async (req, res, next) => {
+  const filename = `children-${uuidv4()}-${Date.now()}.jpeg`;
+  sharp(req.file.buffer)
+    // .resize(500 , 500)
     .toFormat("jpeg")
-    .jpeg({ quality: 90 })
+    .jpeg({ quality: 100 })
     .toFile(`upload/children/${filename}`);
-//save image into our db
+  //save image into our db
   req.body.image = filename;
-  
-  next();  
+
+  next();
 })
 // nested route
 // Get /api/v1/Orphanages/:OrphanageId/childs
-exports.createFilterObj = (req , res , next) => {
-    let filterObject = {};
-    if(req.params.userId) filterObject = { orphanage: req.params.userId};
-     req.filterObj = filterObject;
-      next();
-  }
-   // @desc  get list of children
-   // @route Get /api/v1/children
-   // @access Public
-exports.getChildren = factory.getAll(Child,'Child', {
-   path: 'orphanage',
-   select: 'name'
- });
+exports.createFilterObj = (req, res, next) => {
+  let filterObject = {};
+  if (req.params.userId) filterObject = { orphanage: req.params.userId };
+  req.filterObj = filterObject;
+  next();
+}
+// @desc  get list of children
+// @route Get /api/v1/children
+// @access Public
+exports.getChildren = factory.getAll(Child, 'Child', {
+  path: 'orphanage',
+  select: 'name'
+});
 
- // @desc  get spacific child by id
- // @route Get /api/v1/childss/:id
- // @access Public
+// @desc  get spacific child by id
+// @route Get /api/v1/childss/:id
+// @access Public
 exports.getChild = factory.getOne(Child, {
-   path: 'orphanage',
-   select: 'name'
- });
+  path: 'orphanage',
+  select: 'name'
+});
 // post /api/v1/Orphanages/:OrphanageId/childs
-    // nested route
+// nested route
 
-exports.setOrphanageIdToBody =(req, res , next) =>{
-   if (!req.body.orphanage)req.body.orphanage = req.params.userId;
-     next();
-  }
+exports.setOrphanageIdToBody = (req, res, next) => {
+  if (!req.body.orphanage) req.body.orphanage = req.params.userId;
+  next();
+}
 
-   // @desc  add child
-   // @route child /api/v1/child
-   // @access Private
-  exports.addChild = factory.createOne(Child, {
-   path: 'orphanage',
-   select: 'name'
- });
+// @desc  add child
+// @route child /api/v1/child
+// @access Private
+exports.addChild = factory.createOne(Child, {
+  path: 'orphanage',
+  select: 'name'
+});
 
-   // @desc  update spacific child 
-   // @route Put /api/v1/childs/:id
-   // @access Private
-  
+// @desc  update spacific child 
+// @route Put /api/v1/childs/:id
+// @access Private
+
 exports.updateChild = factory.updateOne(Child, {
-   path: 'orphanage',
-   select: 'name'
- });
+  path: 'orphanage',
+  select: 'name'
+});
 
-   // @desc  delete spacific Post 
-   // @route delete /api/v1/posts/:id
-   // @access Public
-   exports.deleteChild = factory.deleteOne(Child);
+// @desc  delete spacific Post 
+// @route delete /api/v1/posts/:id
+// @access Public
+exports.deleteChild = factory.deleteOne(Child);

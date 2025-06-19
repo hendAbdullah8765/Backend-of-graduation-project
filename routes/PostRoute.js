@@ -1,10 +1,10 @@
 const express = require('express');
 
-const {getPostValidator 
-      ,createPostValidator 
-      ,updatePostValidator 
-      ,deletePostValidator
-    } = require("../utils/validators/postValidator")
+const { getPostValidator
+  , createPostValidator
+  , updatePostValidator
+  , deletePostValidator
+} = require("../utils/validators/postValidator")
 
 const {
   getPosts,
@@ -30,34 +30,37 @@ router.use('/:postId/comments', CommentsRoute)
 
 router.use('/:postId/reactions', ReactionsRoute)
 router.post(
-  '/:id/repost',   
-  authService.protect,  
-  createRepost        
+  '/:id/repost',
+  authService.protect,
+  createRepost
 );
 
 router
-.route('/')
-.get(getPosts)
-.post( 
-  authService.protect,
-  uploadPostImages,
-  resizePostImages,setUserIdToBody,createPostValidator ,createPost)
+  .route('/')
+  .get(getPosts)
+  .post(
+    authService.protect,
+    uploadPostImages,
+    resizePostImages,
+    setUserIdToBody,
+    // createPostValidator,
+    createPost)
 
 router
   .route('/:id')
-  .get( getPostValidator, getPost)
-  .put( 
+  .get(getPostValidator, getPost)
+  .put(
     authService.protect,
     allowedToModifyPost,
     uploadPostImages,
     resizePostImages,
-    updatePostValidator 
-    ,updatePost)
-  
-    .delete( 
-       authService.protect,
-       allowedToModifyPost,
-      deletePostValidator ,deletePost);
+    updatePostValidator
+    , updatePost)
+
+  .delete(
+    authService.protect,
+    allowedToModifyPost,
+    deletePostValidator, deletePost);
 
 module.exports = router;
 

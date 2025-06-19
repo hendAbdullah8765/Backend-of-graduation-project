@@ -1,20 +1,20 @@
-const sharp = require ('sharp');
-const {v4: uuidv4} = require('uuid');
-const asyncHandler = require ('express-async-handler')
-const ApiError = require ('../utils/ApiError')
+const sharp = require('sharp');
+const { v4: uuidv4 } = require('uuid');
+const asyncHandler = require('express-async-handler')
+const ApiError = require('../utils/ApiError')
 const factory = require('./handlerFactory');
 const Post = require("../models/PostModel");
-const {uploadMixOfImages} = require ('../middlewares/uploadImagesMiddleware')
+const { uploadMixOfImages } = require('../middlewares/uploadImagesMiddleware')
 //upload single image
 exports.uploadPostImages = uploadMixOfImages([
   {
-  name : 'image',
-  maxCount : 1
-},
-{
-  name : 'images',
-  maxCount : 5 
-}
+    name: 'image',
+    maxCount: 1
+  },
+  {
+    name: 'images',
+    // maxCount: 100
+  }
 ])
 
 //image processing 
@@ -22,9 +22,9 @@ exports.resizePostImages = asyncHandler(async (req, res, next) => {
   if (req.files && req.files.image) {
     const imageFileName = `post-${uuidv4()}-${Date.now()}.jpeg`;
     await sharp(req.files.image[0].buffer)
-      .resize(2000, 1333)
+      // .resize(2000, 1333)
       .toFormat("jpeg")
-      .jpeg({ quality: 90 })
+      .jpeg({ quality: 100 })
       .toFile(`upload/posts/${imageFileName}`);
     req.body.image = imageFileName;
   }
@@ -34,17 +34,17 @@ exports.resizePostImages = asyncHandler(async (req, res, next) => {
     await Promise.all(
       req.files.images.map(async (img, index) => {
         const imageName = `post-${uuidv4()}-${Date.now()}-${index + 1}.jpeg`;
-        await sharp(img.buffer)
-          .resize(2000, 1333)
+        await sharp(img.buffer).rotate()
+          // .resize(2000, 1333)
           .toFormat("jpeg")
-          .jpeg({ quality: 90 })
+          .jpeg({ quality: 100 })
           .toFile(`upload/posts/${imageName}`);
         req.body.images.push(imageName);
       })
     );
   }
 
-  next();  
+  next();
 });
 
 exports.setUserIdToBody = (req, res, next) => {
@@ -73,7 +73,7 @@ exports.allowedToModifyPost = asyncHandler(async (req, res, next) => {
 exports.getPosts = factory.getAll(Post, 'Post', [
   {
     path: 'user',
-    select: 'name'
+    select: 'name image'
   },
   {
     path: 'repostedFrom',
@@ -132,16 +132,16 @@ exports.deletePost = factory.deleteOne(Post);
 exports.createRepost = asyncHandler(async (req, res, next) => {
   const originalPost = await Post.findById(req.params.id);
   if (!originalPost) {
-    return next(new ApiError('Original post not found', 404));  
+    return next(new ApiError('Original post not found', 404));
   }
 
   const repost = await Post.create({
-    content: originalPost.content,  
-    user: req.user._id,            
-    image: originalPost.image,      
-    images: originalPost.images,    
-    repostedFrom: originalPost._id, 
-    slug: originalPost.slug + '-repost'   
+    content: originalPost.content,
+    user: req.user._id,
+    image: originalPost.image,
+    images: originalPost.images,
+    repostedFrom: originalPost._id,
+    slug: originalPost.slug + '-repost'
   });
   originalPost.repostCount += 1;
   await originalPost.save();
@@ -159,7 +159,7 @@ exports.createRepost = asyncHandler(async (req, res, next) => {
       select: 'name email'
     }
   ]);
-  
-  res.status(201).json({  data: repost });  
+
+  res.status(201).json({ data: repost });
 });
 
