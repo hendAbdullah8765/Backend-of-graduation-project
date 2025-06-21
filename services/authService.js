@@ -55,7 +55,6 @@ exports.signup = asyncHandler(async (req, res, next) => {
     workHours,
     establishedDate,
     birthdate,
-    image,
     gender,
     role
   } = req.body;
@@ -71,7 +70,6 @@ exports.signup = asyncHandler(async (req, res, next) => {
     password,
     phone,
     address,
-    image,
     birthdate,
     gender,
     role: role || "Donor",
@@ -96,8 +94,7 @@ exports.signup = asyncHandler(async (req, res, next) => {
         workHours: workSchedule?.workHours || [],
       },
       establishedDate,
-      birthdate,
-      image
+      birthdate
     });
   }
   if (orphanage) {
@@ -147,7 +144,7 @@ exports.login = asyncHandler(async (req, res, next) => {
     data: {
       user: {
         ...user.toObject(),
-        profilePicture: user.image, // إضافة صورة البروفايل إن وجدت
+        image:user.image,
       },
       posts,
       children,
