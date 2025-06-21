@@ -4,6 +4,9 @@ const express = require("express");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
 
+const http = require("http");
+const initializeSocket = require("./services/socketService");
+
 dotenv.config({ path: "config.env" });
 const ApiError = require("./utils/ApiError");
 const globalError = require("./middlewares/errorMiddleware");
@@ -18,6 +21,7 @@ const ChildRoute = require("./routes/ChildRoute");
 const UserRoute = require("./routes/UserRoute");
 const authRoute = require("./routes/authRoute");
 const messageRouter = require("./routes/MessageRoute");
+const ChatRouter = require("./routes/chatRoute");
 const donationRouter = require("./routes/DonationRoute");
 const donationItemRouter = require("./routes/DonationItemRoute");
 const adoptionRequestRouter = require("./routes/AdoptionRequestRoute");
@@ -47,6 +51,7 @@ app.use("/api/v1/Children", ChildRoute);
 app.use("/api/v1/users", UserRoute);
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/messages", messageRouter);
+app.use("/api/v1/chat",ChatRouter);
 app.use("/api/v1/donations", donationRouter);
 app.use("/api/v1/donation-items", donationItemRouter);
 app.use("/api/v1/adoption-requests", adoptionRequestRouter);
@@ -59,9 +64,12 @@ app.all("*", (req, res, next) => {
 //Global  error Handling middleware for express
 app.use(globalError);
 
+const httpServer = http.createServer(app);
+initializeSocket(httpServer);
+
 const PORT = process.env.PORT || 8000;
-const server = app.listen(PORT, () => {
-  console.log(`App Running ON PORT ${PORT}`);
+const server = httpServer.listen(PORT, () => {
+  console.log(`Server + Socket.IO running on PORT ${PORT}`);
 });
 
 // Events => list => callback(err) خارج ال express
