@@ -20,17 +20,6 @@ exports.createMessageValidator = [
   validatorMiddleware,
 ];
 
-exports.getMessageValidator = [
-  check("id").isMongoId().withMessage("Invalid message ID format"),
-  validatorMiddleware,
-];
-
-exports.updateMessageValidator = [
-  check("id").isMongoId().withMessage("Invalid message ID format"),
-  body("message").optional().isString().withMessage("message must be a string"),
-  validatorMiddleware,
-];
-
 exports.deleteMessageValidator = [
   check("id").isMongoId().withMessage("Invalid message ID format"),
   validatorMiddleware,
