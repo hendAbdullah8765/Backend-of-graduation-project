@@ -208,8 +208,8 @@ exports.createRepost = asyncHandler(async (req, res, next) => {
   const repost = await Post.create({
     content: originalPost.content,
     user: req.user._id,
-    image: originalPost.image,
-    images: originalPost.images,
+    image: originalPost.image?.replace("/upload/posts/", ""),
+    images: originalPost.images?.map(img => img.replace("/upload/posts/", "")),
     repostedFrom: originalPost._id,
     slug: `${originalPost.slug  }-repost`
   });
