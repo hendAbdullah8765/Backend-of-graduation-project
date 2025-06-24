@@ -1,7 +1,7 @@
 const express = require('express');
 
 const { getPostValidator
-  , createPostValidator
+  // , createPostValidator
   , updatePostValidator
   , deletePostValidator
 } = require("../utils/validators/postValidator")

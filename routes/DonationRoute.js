@@ -1,8 +1,8 @@
 const express = require("express");
 const authService = require("../services/authService");
 const {
-  getDonations,
-  getDonation,
+  getAllDonations,
+  getDonationById,
   createDonation,
   updateDonation,
   deleteDonation,
@@ -20,12 +20,12 @@ router.use(authService.protect);
 
 router
   .route("/")
-  .get(getDonations)
+  .get(getAllDonations)
   .post(createDonationValidator, createDonation);
 
 router
   .route("/:id")
-  .get(getDonationValidator, getDonation)
+  .get(getDonationValidator, getDonationById)
   .put(updateDonationValidator, updateDonation)
   .delete(deleteDonationValidator, deleteDonation);
 

@@ -2,7 +2,7 @@ const express = require("express");
 const authService = require("../services/authService");
 const {
   getAdoptionRequests,
-  getAdoptionRequest,
+  getAdoptionRequestById,
   createAdoptionRequest,
   updateAdoptionRequest,
   deleteAdoptionRequest,
@@ -25,7 +25,7 @@ router
 
 router
   .route("/:id")
-  .get(getAdoptionRequestValidator, getAdoptionRequest)
+  .get(getAdoptionRequestValidator, getAdoptionRequestById)
   .put(updateAdoptionRequestValidator, updateAdoptionRequest)
   .delete(deleteAdoptionRequestValidator, deleteAdoptionRequest);
 
