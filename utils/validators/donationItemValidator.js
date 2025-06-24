@@ -2,7 +2,7 @@ const { check, body } = require("express-validator");
 const validatorMiddleware = require("../../middlewares/validatorMiddleware");
 
 exports.createDonationItemValidator = [
-  body("userId")
+  body("userId").optional()
     .notEmpty()
     .withMessage("userId is required")
     .isMongoId()

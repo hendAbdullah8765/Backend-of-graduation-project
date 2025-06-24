@@ -2,11 +2,11 @@ const { check, body } = require("express-validator");
 const validatorMiddleware = require("../../middlewares/validatorMiddleware");
 
 exports.createAdoptionRequestValidator = [
-  body("userId")
-    .notEmpty()
-    .withMessage("userId is required")
-    .isMongoId()
-    .withMessage("Invalid userId"),
+  // body("userId")
+  //   .notEmpty()
+  //   .withMessage("userId is required")
+  //   .isMongoId()
+  //   .withMessage("Invalid userId"),
   body("childId")
     .notEmpty()
     .withMessage("childId is required")
