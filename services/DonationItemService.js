@@ -56,6 +56,7 @@ exports.getAllDonationItems = asyncHandler(async (req, res) => {
     id: d._id,
     receiptNumber: d.receiptNumber,
     donorName: d.userId?.name || "Anonymous",
+    donorImage: d.userId?.image || "",
     orphanageName: d.orphanageId?.name || "",
     itemType: d.itemType,
     deliveryMethod: d.deliveryMethod,
