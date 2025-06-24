@@ -42,21 +42,17 @@ const PostSchema = new mongoose.Schema(
 );
 
 const setImageURL = (doc) => {
-  if (doc.image) {
-    // const imageUrl = `${process.env.BASE_URL}/posts/${doc.image}`
-    const imageUrl = `/upload/posts/${doc.image}`
-    doc.image = imageUrl;
+  if (doc.image && !doc.image.startsWith("/upload/posts/")) {
+    doc.image = `/upload/posts/${doc.image}`;
   }
-  if (doc.images) {
-    const imagesList = []
-    doc.images.forEach((img) => {
-      const imageUrl = `/upload/posts/${img}`
-      // const imageUrl = `${process.env.BASE_URL}/posts/${img}`
-      imagesList.push(imageUrl)
-    })
-    doc.images = imagesList;
+
+  if (doc.images && doc.images.length) {
+    doc.images = doc.images.map((img) =>
+      img.startsWith("/upload/posts/") ? img : `/upload/posts/${img}`
+    );
   }
-}
+};
+
 
 // getAll / update / getOne
 PostSchema.post('init', (doc) => {
