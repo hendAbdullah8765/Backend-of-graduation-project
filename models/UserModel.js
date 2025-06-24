@@ -39,6 +39,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    
+    notificationToken: { type: String },
 
     password: {
       type: String,

@@ -3,16 +3,16 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const notificationSchema = new Schema({
-  userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  userId: { type: Schema.Types.ObjectId, ref: "User", required: true }, // صاحب الإشعار
+  senderId: { type: Schema.Types.ObjectId, ref: "User" }, // من قام بالفعل (لو applicable)
   type: {
     type: String,
-    enum: ["comment", "follow", "donation", "adoption_request"],
+    enum: ["React", "Repost","Message", "donation", "adoption_request"],
     required: true,
   },
-  relatedId: { type: Schema.Types.ObjectId, required: true },
+  relatedId: { type: Schema.Types.ObjectId, required: true }, // ID العنصر المرتبط زي post أو user
+  message: { type: String }, // اختياري
   isRead: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now },
-});
+}, { timestamps: true });
 
-// Optionally, you can add a virtual to populate related model based on `type`.
 module.exports = mongoose.model("Notification", notificationSchema);

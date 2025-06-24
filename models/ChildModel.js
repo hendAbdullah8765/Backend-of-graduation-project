@@ -14,7 +14,7 @@ const childSchema = new mongoose.Schema({
     enum: ['male', 'female'],
     required: true
   },
-  EducationalLevel:{
+  education:{
     type: String,
     required: true
   },
