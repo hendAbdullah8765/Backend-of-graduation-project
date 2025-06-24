@@ -3,7 +3,7 @@ const asyncHandler = require("express-async-handler");
 const Reaction = require("../models/ReactionModel");
 const factory = require('./handlerFactory');
 const ApiError = require("../utils/ApiError");
-
+const { sendReactNotification } = require("./NotificationService");
 // nested route
 // Get /api/v1/posts/:postId/reactions
 exports.createFilterObj = (req , res , next) => {
@@ -78,6 +78,9 @@ exports.createReaction = asyncHandler(async (req, res) => {
     { path: 'post', select: 'content' }
   ]);
 
+if (reaction.post.user.toString() !== user.toString()) {
+  await sendReactNotification(user, reaction.post.user, post);
+}
   res.status(201).json({ message: "Reaction added", data: reaction });
 });
 

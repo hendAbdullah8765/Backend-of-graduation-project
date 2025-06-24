@@ -5,6 +5,8 @@ const ApiError = require('../utils/ApiError')
 const factory = require('./handlerFactory');
 const Post = require("../models/PostModel");
 const React = require("../models/ReactionModel")
+const { sendRepostNotification } = require('./NotificationService');
+
 const { uploadMixOfImages } = require('../middlewares/uploadImagesMiddleware')
 //upload single image
 exports.uploadPostImages = uploadMixOfImages([
@@ -208,8 +210,8 @@ exports.createRepost = asyncHandler(async (req, res, next) => {
   const repost = await Post.create({
     content: originalPost.content,
     user: req.user._id,
-    image: originalPost.image?.replace("/upload/posts/", ""),
-    images: originalPost.images?.map(img => img.replace("/upload/posts/", "")),
+    image: originalPost.image,
+    images: originalPost.images,
     repostedFrom: originalPost._id,
     slug: `${originalPost.slug  }-repost`
   });
@@ -229,6 +231,10 @@ exports.createRepost = asyncHandler(async (req, res, next) => {
       select: 'name email image'
     }
   ]);
+  if (originalPost.user.toString() !== req.user._id.toString()) {
+    console.log("Sending Repost Notification")
+  await sendRepostNotification(req.user._id, originalPost.user, repost._id);
+}
 
   res.status(201).json({ data: repost });
 });

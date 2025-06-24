@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const asyncHandler = require('express-async-handler')
 const Message = require('../models/MessageModel'); // موديل الرسالة
 const { uploadMixOfImages } = require('../middlewares/uploadImagesMiddleware')
+const { sendMessageNotification } = require('./NotificationService');
 
 exports.uploadMessageImages = uploadMixOfImages([
   {
@@ -36,6 +37,10 @@ exports.sendMessage = async (req, res) => {
       image,
     });
 
+  if (senderId.toString() !== receiverId.toString()) {
+
+   await sendMessageNotification(senderId,newMessage, receiverId);
+  }
     res.status(201).json({ success: true, data: newMessage });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
