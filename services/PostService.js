@@ -203,6 +203,7 @@ exports.deletePost = factory.deleteOne(Post);
 // @access Private
 exports.createRepost = asyncHandler(async (req, res, next) => {
   const originalPost = await Post.findById(req.params.id);
+  const content= req.body
   if (!originalPost) {
     return next(new ApiError('Original post not found', 404));
   }
@@ -213,7 +214,8 @@ exports.createRepost = asyncHandler(async (req, res, next) => {
     image: originalPost.image,
     images: originalPost.images,
     repostedFrom: originalPost._id,
-    slug: `${originalPost.slug  }-repost`
+    slug: `${originalPost.slug  }-repost`,
+    content
   });
   originalPost.repostCount += 1;
   await originalPost.save();
