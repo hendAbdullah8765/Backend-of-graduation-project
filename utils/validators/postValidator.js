@@ -8,7 +8,7 @@ exports.getPostValidator = [
 ];
 
 exports.createPostValidator = [
-    check('content')
+    check('content').optional()
         .notEmpty()
         .withMessage('content post required')
         .isLength({ min: 1 })
