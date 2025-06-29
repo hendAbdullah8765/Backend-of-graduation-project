@@ -48,7 +48,7 @@ exports.createDonationItem = asyncHandler(async (req, res) => {
 
 // Get all donation items
 exports.getAllDonationItems = asyncHandler(async (req, res) => {
-  const donations = await DonationItem.find()
+  const donations = await DonationItem.find({ orphanageId: req.user._id})
     .populate("userId", "name image")
     .populate("orphanageId", "name");
 

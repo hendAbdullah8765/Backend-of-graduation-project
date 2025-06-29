@@ -44,7 +44,7 @@ exports.createDonation = async (req, res) => {
 
 exports.getAllDonations = async (req, res) => {
   try {
-    const donations = await Donation.find()
+    const donations = await Donation.find({ orphanageId: req.user._id })
       .populate("userId", "name image")
       .populate("orphanageId", "name");
    const formatted = donations.map(d => ({

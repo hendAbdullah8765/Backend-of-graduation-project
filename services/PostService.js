@@ -79,11 +79,11 @@ exports.getPosts = asyncHandler(async (req, res, next) => {
     .populate([
       {
         path: 'user',
-        select: 'name image'
+        select: 'name image repostCount'
       },
       {
         path: 'repostedFrom',
-        select: 'content user image repostCount',
+        select: 'content user image ',
         populate: {
           path: 'user',
           select: 'name'
@@ -203,22 +203,25 @@ exports.deletePost = factory.deleteOne(Post);
 // @access Private
 exports.createRepost = asyncHandler(async (req, res, next) => {
   const originalPost = await Post.findById(req.params.id);
-  const content= req.body
+
   if (!originalPost) {
     return next(new ApiError('Original post not found', 404));
   }
 
+  const userComment = req.body.content || ""; // محتوى الريبوست من المستخدم
+
   const repost = await Post.create({
-    content: originalPost.content,
+    content: userComment, // دا هو تعليق المستخدم على الريبوست
     user: req.user._id,
     image: originalPost.image,
     images: originalPost.images,
     repostedFrom: originalPost._id,
-    slug: `${originalPost.slug  }-repost`,
-    content
+    slug: `${originalPost.slug}-repost`
   });
+
   originalPost.repostCount += 1;
   await originalPost.save();
+
   await repost.populate([
     {
       path: 'repostedFrom',
@@ -233,49 +236,19 @@ exports.createRepost = asyncHandler(async (req, res, next) => {
       select: 'name email image'
     }
   ]);
+  if (repost.user?.image && !repost.user.image.startsWith('http')) {
+    repost.user.image = `${process.env.BASE_URL}/upload/users/${repost.user.image}`;
+  }
+  if (repost.repostedFrom?.user?.image && !repost.repostedFrom.user.image.startsWith('http')) {
+    repost.repostedFrom.user.image = `${process.env.BASE_URL}/upload/users/${repost.repostedFrom.user.image}`;
+  }
+
   if (originalPost.user.toString() !== req.user._id.toString()) {
-    console.log("Sending Repost Notification")
-  await sendRepostNotification(req.user._id, originalPost.user, repost._id);
-}
+    console.log("Sending Repost Notification");
+    await sendRepostNotification(req.user._id, originalPost.user, repost._id);
+  }
 
   res.status(201).json({ data: repost });
 });
 
-// // @desc  get posts for specific user
-// // @route GET /api/v1/posts/user/:userId
-// // @access Public
-// exports.getUserPosts = asyncHandler(async (req, res) => {
-//   const { userId } = req.params;
-
-//   const posts = await Post.find({ user: userId })
-//     .populate([
-//       { path: 'user', select: 'name image' },
-//       {
-//         path: 'repostedFrom',
-//         select: 'content user image repostCount',
-//         populate: { path: 'user', select: 'name image' },
-//       },
-//     ])
-//     .sort({ createdAt: -1 });
-
-//   const postsWithExtras = await Promise.all(
-//     posts.map(async (post) => {
-//       const reacts = await React.find({ post: post._id }).populate('user', 'name image');
-
-//       const repostsCount = await Post.countDocuments({ repostedFrom: post._id });
-
-//       return {
-//         ...post.toObject(),
-//         reactsCount: reacts.length,
-//         reacts,
-//         repostsCount,
-//       };
-//     })
-//   );
-
-//   res.status(200).json({
-//     results: postsWithExtras.length,
-//     data: postsWithExtras,
-//   });
-// });
 

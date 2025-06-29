@@ -5,7 +5,7 @@ const Child = require("../models/ChildModel")
 
 exports.getAdoptionRequests = async (req, res) => {
   try {
-    const requests = await AdoptionRequest.find()
+    const requests = await AdoptionRequest.find({ orphanageId: req.user._id})
       .sort({ createdAt: -1 })
       .populate("userId", "name image")
       .populate("childId", "name age image gender education religion");

@@ -35,7 +35,6 @@ const initializeSocket = (httpServer) => {
 
       const onlineUserIds = [...OnlineUsers.keys()];
 
-      // ابعت الرسالة الجديدة فقط للطرفين
       const senderSockets = OnlineUsers.get(messageData.senderId) || [];
       const receiverSockets = OnlineUsers.get(messageData.receiverId) || [];
 

@@ -9,6 +9,7 @@ const ApiError = require('../utils/ApiError');
 const GenerateToken = require('../utils/createToken')
 const Message = require('../models/MessageModel');
 const Post = require('../models/PostModel');
+const React = require("../models/ReactionModel")
 const { uploadSingleImage } = require('../middlewares/uploadImagesMiddleware')
 
 //upload single image
@@ -124,9 +125,68 @@ exports.deleteUser = factory.deleteOne(User);
 // @route Get /api/v1/users/getMe
 // @access private
 exports.getLoggedUserData = asyncHandler(async (req, res, next) => {
-  req.params.id = req.user._id;
-  next()
+  const user = await User.findById(req.user._id).select('-password');
+  if (!user) {
+    return next(new ApiError('User not found', 404));
+  }
+
+  // جلب البوستات الخاصة بالمستخدم
+  const posts = await Post.find({ user: user._id })
+    .populate([
+      {
+        path: 'user',
+        select: 'name image repostCount'
+      },
+      {
+        path: 'repostedFrom',
+        select: 'content user image',
+        populate: {
+          path: 'user',
+          select: 'name'
+        }
+      }
+    ]);
+
+  const userId = req.user._id.toString();
+
+  const postsWithExtras = await Promise.all(
+    posts.map(async (post) => {
+      const reacts = await React.find({ post: post._id }).populate('user', 'name image');
+      const myReact = reacts.find(r => r.user._id.toString() === userId);
+      const repostsCount = await Post.countDocuments({ repostedFrom: post._id });
+
+      return {
+        ...post.toObject(),
+        reactsCount: reacts.length,
+        reacts,
+        myReact: myReact || null,
+        repostsCount
+      };
+    })
+  );
+
+  // لو المستخدم دار أيتام، هات بيانات الجدول
+  let about = null;
+  if (user.role === 'Orphanage') {
+    const orphanage = await Orphanage.findById(user.orphanage);
+    about = {
+      phone: user.phone,
+      workDays: orphanage?.workSchedule?.workDays || [],
+      workHours: orphanage?.workSchedule?.workHours || "",
+      establishedDate: orphanage?.establishedDate || null,
+    };
+  }
+
+  res.status(200).json({
+    success: true,
+    data: {
+      user,
+      about, // ✅ معلومات الدار (لو موجودة)
+      posts: postsWithExtras
+    }
+  });
 });
+
 
 // @desc  update logged user pass
 // @route put /api/v1/users/updateMyPassword
@@ -190,17 +250,19 @@ exports.updateLoggedUserData = asyncHandler(async (req, res, next) => {
       },
       establishedDate,
     }, { new: true });
-
     return res.status(200).json({
       data: {
         user: updatedUser,
         orphanage: updatedOrphanage,
       },
+      
     });
   }
+  const token = GenerateToken(updatedUser._id);
 
   res.status(200).json({
     data: updatedUser,
+    token
   });
 });
 
@@ -217,4 +279,20 @@ exports.deleteLoggedUserData = asyncHandler(async (req, res, next) => {
 exports.reActivateUser = asyncHandler(async (req, res, next) => {
   await User.findByIdAndUpdate(req.user._id, { active: true });
   res.status(200).json({ status: 'Account reactivated successfully' });
+});
+
+// تحت آخر دالة مثلاً
+exports.saveNotificationToken = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+  if (!token) {
+    return res.status(400).json({ success: false, message: "Token is required" });
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { notificationToken: token },
+    { new: true }
+  );
+
+  res.status(200).json({ success: true, message: "Token saved", data: user });
 });
