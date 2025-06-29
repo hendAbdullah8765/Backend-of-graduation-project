@@ -4,6 +4,7 @@ const asyncHandler = require('express-async-handler')
 const Message = require('../models/MessageModel'); // موديل الرسالة
 const { uploadMixOfImages } = require('../middlewares/uploadImagesMiddleware')
 const { sendMessageNotification } = require('./NotificationService');
+const Chat = require("../models/chatModel");
 
 exports.uploadMessageImages = uploadMixOfImages([
   {
@@ -29,18 +30,39 @@ exports.sendMessage = async (req, res) => {
   const { chatId, senderId, receiverId, message, image } = req.body;
 
   try {
+    let finalChatId = chatId;
+
+    // 1️⃣ لو مفيش chatId متبعتش من الفرونت
+    if (!chatId) {
+      // دوري هل فيه شات بالفعل بين الاتنين
+      let existingChat = await Chat.findOne({
+        users: { $all: [senderId, receiverId] },
+      });
+
+      // لو مفيش، أنشئي شات جديدة
+      if (!existingChat) {
+        existingChat = await Chat.create({
+          users: [senderId, receiverId],
+        });
+      }
+
+      finalChatId = existingChat._id;
+    }
+
+    // 2️⃣ احفظ الرسالة باستخدام finalChatId
     const newMessage = await Message.create({
-      chatId,
+      chatId: finalChatId,
       senderId,
       receiverId,
       message,
       image,
     });
 
-  if (senderId.toString() !== receiverId.toString()) {
+    // 3️⃣ بعت إشعار لو الطرف التاني مختلف
+    if (senderId.toString() !== receiverId.toString()) {
+      await sendMessageNotification(senderId, newMessage, receiverId);
+    }
 
-   await sendMessageNotification(senderId,newMessage, receiverId);
-  }
     res.status(201).json({ success: true, data: newMessage });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
