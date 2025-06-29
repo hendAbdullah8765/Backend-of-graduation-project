@@ -21,19 +21,20 @@ const {
   updateLoggedUserData,
   deleteLoggedUserData,
   reActivateUser,
+  saveNotificationToken
 } = require("../services/UserService");
+
 const authService = require("../services/authService");
-
-
 
 const router = express.Router();
 
 const ReactionsRoute = require('./ReactionRoute');
 const childRoute = require('./ChildRoute')
+
 router.use('/:userId/children',childRoute)
 router.use('/:userId/reactions', ReactionsRoute)
-
 router.get("/getMe", authService.protect, getLoggedUserData, getUser);
+router.put("/saveNotificationToken", authService.protect, saveNotificationToken);
 
 router.put(
   "/changeMyPassword",
@@ -43,7 +44,8 @@ router.put(
 );
 
 router.put(
-  "/updateMe",uploadUserImage,
+  "/updateMe",
+  uploadUserImage,
   resizeImage,
   authService.protect,
   updateLoggedUserValidator,
