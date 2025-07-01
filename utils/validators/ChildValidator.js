@@ -16,10 +16,10 @@ exports.createChildValidator = [
     .notEmpty().withMessage('Gender is required')
     .isIn(['male', 'female']).withMessage('Gender must be male or female'),
 
-  check('EducationalLevel')
+  check('education')
     .notEmpty().withMessage('Educational level is required'),
 
-  check('skinColor')
+  check('skinTone')
     .notEmpty().withMessage('Skin color is required')
     .isString(),
 
@@ -28,14 +28,12 @@ exports.createChildValidator = [
     .isIn(['black', 'brown', 'blonde', 'red', 'gray']).withMessage('Invalid hair color'),
 
   check('hairStyle')
-    .optional()
     .isIn(['curly', 'wavy', 'straight']).withMessage('Invalid hair style'),
 
   check('religion')
-    .optional()
     .isIn(['Muslim', 'Christian']).withMessage('Invalid religion'),
   
-  check('photo')
+  check('image')
     .optional()
     .isURL().withMessage('Photo must be a valid URL'),
   
