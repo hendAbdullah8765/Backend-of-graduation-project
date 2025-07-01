@@ -9,6 +9,11 @@ const childSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  birthdate: {
+      type: Date,
+      required: [true, 'Birthdate is required']
+  },
+
   gender: {
     type: String,
     enum: ['male', 'female'],
