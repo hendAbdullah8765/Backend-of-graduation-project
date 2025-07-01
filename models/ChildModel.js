@@ -18,8 +18,13 @@ const childSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  
+  eyeColor:{
+    type: String,
+    required: true
+  },
 
-  skinColor: {
+  skinTone: {
     type: String,
     required: true
 
@@ -46,15 +51,24 @@ const childSchema = new mongoose.Schema({
     ref: 'Orphanage',
     required: true
   },
+  personality:{
+    type: String,
+    required: true
+  },
   createdAt: {
     type: Date,
     default: Date.now
   },
+  
   slug: {
     type: String
     
   }
-});
+},
+{
+    timestamps: true,
+}
+);
 
 const setImageURL = (doc)=>{
   if(doc.image){
