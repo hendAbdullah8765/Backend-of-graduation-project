@@ -76,6 +76,7 @@ exports.allowedToModifyPost = asyncHandler(async (req, res, next) => {
 
 exports.getPosts = asyncHandler(async (req, res, next) => {
   const posts = await Post.find()
+    .sort({ createdAt: -1 })
     .populate([
       {
         path: 'user',
@@ -236,12 +237,11 @@ exports.createRepost = asyncHandler(async (req, res, next) => {
       select: 'name email image'
     }
   ]);
-  if (repost.user?.image && !repost.user.image.startsWith('http')) {
-    repost.user.image = `${process.env.BASE_URL}/upload/users/${repost.user.image}`;
-  }
-  if (repost.repostedFrom?.user?.image && !repost.repostedFrom.user.image.startsWith('http')) {
-    repost.repostedFrom.user.image = `${process.env.BASE_URL}/upload/users/${repost.repostedFrom.user.image}`;
-  }
+
+  if (repost.user?.image && !repost.user.image.startsWith('/upload/users')) {
+  repost.user.image = `/upload/users/${repost.user.image}`;
+}
+
 
   if (originalPost.user.toString() !== req.user._id.toString()) {
     console.log("Sending Repost Notification");

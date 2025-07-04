@@ -4,7 +4,7 @@ const asyncHandler = require('express-async-handler')
 const Message = require('../models/MessageModel'); // موديل الرسالة
 const { uploadMixOfImages } = require('../middlewares/uploadImagesMiddleware')
 const { sendMessageNotification } = require('./NotificationService');
-const Chat = require("../models/chatModel");
+const Chat = require("../models/chatModel"); // تأكدي إن ده موجود
 
 exports.uploadMessageImages = uploadMixOfImages([
   {
@@ -26,48 +26,49 @@ exports.resizeMessageImages = asyncHandler(async (req, res, next) => {
 
   next();
 });
-exports.sendMessage = async (req, res) => {
-  const { chatId, senderId, receiverId, message, image } = req.body;
 
-  try {
-    let finalChatId = chatId;
+exports.sendMessage = async (messageData) => {
+  const { chatId, senderId, receiverId, message, image } = messageData;
+  console.log("incoming message",messageData)
 
-    // 1️⃣ لو مفيش chatId متبعتش من الفرونت
-    if (!chatId) {
-      // دوري هل فيه شات بالفعل بين الاتنين
-      let existingChat = await Chat.findOne({
-        users: { $all: [senderId, receiverId] },
-      });
+ if(!senderId || !receiverId){
+  throw new Error("sender &recevir are required")
+ }
 
-      // لو مفيش، أنشئي شات جديدة
-      if (!existingChat) {
-        existingChat = await Chat.create({
-          users: [senderId, receiverId],
-        });
-      }
+  let finalChatId = chatId;
 
-      finalChatId = existingChat._id;
-    }
-
-    // 2️⃣ احفظ الرسالة باستخدام finalChatId
-    const newMessage = await Message.create({
-      chatId: finalChatId,
-      senderId,
-      receiverId,
-      message,
-      image,
+  // لو مفيش chatId، دوري أو أنشئي واحد
+  if (!chatId) {
+    let existingChat = await Chat.findOne({
+      members: { $all: [senderId, receiverId] },
     });
 
-    // 3️⃣ بعت إشعار لو الطرف التاني مختلف
-    if (senderId.toString() !== receiverId.toString()) {
-      await sendMessageNotification(senderId, newMessage, receiverId);
+    if (!existingChat) {
+      existingChat = await Chat.create({
+        members: [senderId, receiverId],
+      });
     }
 
-    res.status(201).json({ success: true, data: newMessage });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    finalChatId = existingChat._id;
   }
+
+  // أنشئي الرسالة
+  const newMessage = await Message.create({
+    chatId: finalChatId,
+    senderId,
+    receiverId,
+    message,
+    image,
+  });
+   
+  console.log("chat created ",senderId ,receiverId )
+  const populatedMessage = await Message.findById(newMessage._id)
+    .populate("chatId")
+    .populate("senderId", "name email image");
+
+  return populatedMessage;
 };
+
 
 // ✅ جلب كل الرسائل داخل شات
 exports.getMessages = async (req, res) => {

@@ -22,12 +22,14 @@ const messageSchema = new Schema(
     timestamps: true,
   }
 );
-const setImageURL = (doc)=>{
-  if(doc.image){
-    const imageUrl =`${process.env.BASE_URL}/upload/message/${doc.image}`
-    doc.image = imageUrl;
+const setImageURL = (doc) => {
+  if (doc.image && !doc.image.startsWith('/upload/messages/')) {
+    doc.image = `/upload/messages/${doc.image}`;
   }
+
 }
+
+
 // getAll / update / getOne
 messageSchema.post('init', (doc) => {
   setImageURL(doc)

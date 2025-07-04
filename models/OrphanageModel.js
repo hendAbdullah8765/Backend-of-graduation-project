@@ -24,12 +24,10 @@ const orphanageSchema = new mongoose.Schema({
 
   currentChildren: {
     type: Number,
-    required: [true, 'Number of children is required'],
     min: 0
   },
   totalCapacity: {
     type: Number,
-    required: [true, 'Total capacity is required'],
     min: 1
   },
   active: {
@@ -38,7 +36,6 @@ const orphanageSchema = new mongoose.Schema({
   },
   staffCount: {
     type: Number,
-    required: [true, 'Staff count is required'],
     min: 0
   },
   establishedDate: {

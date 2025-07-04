@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema(
     passwordResetVerified: Boolean,
     role: {
       type: String,
-      enum: ["Orphanage", "Donor", "admin"],
+      enum: ["Orphanage", "Donor"],
       default: "Donor",
     },
     orphanage: {
@@ -69,11 +69,12 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 const setImageURL = (doc) => {
-  if (doc.image) {
-    const imageUrl = `/upload/users/${doc.image}`;
-    doc.image = imageUrl;
+  if (doc.image && !doc.image.startsWith('/upload/users/')) {
+    doc.image = `/upload/users/${doc.image}`;
   }
-};
+
+}
+
 // getAll / update / getOne
 userSchema.post("init", (doc) => {
   setImageURL(doc);

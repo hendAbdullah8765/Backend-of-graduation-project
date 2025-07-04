@@ -2,6 +2,7 @@ const factory = require("./handlerFactory");
 const AdoptionRequest = require("../models/AdoptionRequestModel");
 const { sendAdoptionNotification } = require("./NotificationService");
 const Child = require("../models/ChildModel")
+const User =require("../models/UserModel")
 
 exports.getAdoptionRequests = async (req, res) => {
   try {
@@ -58,11 +59,21 @@ exports.createAdoptionRequest = async (req, res) => {
       location,
       reason,
     });
-  const child = await Child.findById(childId).select('orphanageId');
-    const {orphanageId} = child;
 
-    await sendAdoptionNotification(req.user._id, /*recipient*/ orphanageId, newRequest._id);
- 
+    // ✅ جيبي orphanageId من الطفل
+    const child = await Child.findById(childId).select('orphanage');
+    const orphanageId = child?.orphanage;
+    if (!orphanageId) {
+      return res.status(400).json({ success: false, message: 'Child has no orphanage assigned' });
+    }
+
+    // ✅ هات اليوزر اللي رابط orphanage دي
+    const orphanageUser = await User.findOne({ orphanage: orphanageId });
+
+    if (orphanageUser) {
+      await sendAdoptionNotification(req.user._id, orphanageUser._id, newRequest._id);
+    }
+
     res.status(201).json({ success: true, data: newRequest });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

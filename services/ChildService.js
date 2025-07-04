@@ -34,7 +34,7 @@ exports.createFilterObj = (req, res, next) => {
 // @access Public
 exports.getChildren = factory.getAll(Child, 'Child', {
   path: 'orphanage',
-  select: 'name'
+  select: 'name image'
 });
 
 // @desc  get spacific child by id
@@ -42,7 +42,7 @@ exports.getChildren = factory.getAll(Child, 'Child', {
 // @access Public
 exports.getChild = factory.getOne(Child, {
   path: 'orphanage',
-  select: 'name'
+  select: 'name image'
 });
 // post /api/v1/Orphanages/:OrphanageId/childs
 // nested route
@@ -55,10 +55,42 @@ exports.setOrphanageIdToBody = (req, res, next) => {
 // @desc  add child
 // @route child /api/v1/child
 // @access Private
-exports.addChild = factory.createOne(Child, {
-  path: 'orphanage',
-  select: 'name'
+exports.addChild = asyncHandler(async (req, res, next) => {
+  const {
+    name,
+    gender,
+    eyeColor,
+    skinTone,
+    hairColor,
+    hairStyle,
+    religion,
+    birthdate,
+    image,
+    personality
+  } = req.body;
+
+  // تأكدي إن المستخدم دار أيتام وعنده Orphanage ID
+  if (req.user.role !== 'Orphanage' || !req.user.orphanage) {
+    return res.status(403).json({ success: false, message: "Only orphanage users can create children" });
+  }
+
+  const newChild = await Child.create({
+    name,
+    gender,
+    eyeColor,
+    skinTone,
+    hairColor,
+    hairStyle,
+    religion,
+    birthdate,
+    image,
+    personality,
+    orphanage: req.user.orphanage, // ID للدار مأخوذ من التوكن
+  });
+
+  res.status(201).json({ success: true, data: newChild });
 });
+
 
 // @desc  update spacific child 
 // @route Put /api/v1/childs/:id

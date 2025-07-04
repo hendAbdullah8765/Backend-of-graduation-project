@@ -54,9 +54,11 @@ exports.signup = asyncHandler(async (req, res, next) => {
     workDays,
     workHours,
     establishedDate,
+    image,
     birthdate,
     gender,
-    role
+    notificationToken,
+    role,
   } = req.body;
 
   const workSchedule = {
@@ -72,6 +74,9 @@ exports.signup = asyncHandler(async (req, res, next) => {
     address,
     birthdate,
     gender,
+    notificationToken,
+    image,
+  
     role: role || "Donor",
   });
 
@@ -89,12 +94,14 @@ exports.signup = asyncHandler(async (req, res, next) => {
       currentChildren,
       totalCapacity,
       staffCount,
+      image,
       workSchedule: {
         workDays: workSchedule?.workDays || [],
         workHours: workSchedule?.workHours || [],
       },
       establishedDate,
-      birthdate
+      birthdate,
+      notificationToken
     });
   }
   if (orphanage) {
@@ -115,36 +122,61 @@ exports.signup = asyncHandler(async (req, res, next) => {
 // @route Get /api/v1/auth/login
 // @access Public
 exports.login = asyncHandler(async (req, res, next) => {
-  const user = await User.findOne({ email: req.body.email }).select('+password').populate('orphanage');
-  ;
+  const { email, password, notificationToken } = req.body;
 
-  if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
+  // 1. جلب المستخدم مع الباسورد
+  const user = await User.findOne({ email })
+    .select('+password')
+    .populate('orphanage');
+
+  // 2. تحقق من الوجود والباسورد
+  if (!user || !(await bcrypt.compare(password, user.password))) {
     return next(new ApiError("Incorrect email or password", 401));
   }
+
+  // 3. لو وصلنا notificationToken وجديد أو مختلف، حدّثه
+  if (notificationToken && user.notificationToken !== notificationToken) {
+    user.notificationToken = notificationToken;
+try {
+    await user.save();
+    console.log('Notification token updated!');
+  } catch (err) {
+    console.error('Error saving user:',err);
+ }  }
+
+  // 4. توليد توكن الجلسة
   const token = GenerateToken(user._id);
 
+  // 5. باقي البيانات اللي بترجعها
   const posts = await Post.find({ user: user._id });
   const requests = await AdoptionRequest.find({ orphanage: user._id });
-  const donationItems = await DonationItem.find({ userId: user._id }).populate('orphanageId', 'name');
-  const donation = await Donation.find({ userId: user._id }).populate('orphanageId', 'name');
-  const notification = await Notification.find({ userId: user._id }).populate('orphanageId', 'name');
-  const settings = await Setting.find({ userId: user._id }).populate('orphanageId', 'name');
+  const donationItems = await DonationItem.find({ userId: user._id })
+    .populate('orphanageId', 'name');
+  const donation = await Donation.find({ userId: user._id })
+    .populate('orphanageId', 'name');
+  const notification = await Notification.find({ userId: user._id })
+    .populate('orphanageId', 'name');
+  const settings = await Setting.find({ userId: user._id })
+    .populate('orphanageId', 'name');
 
   let children = [];
   if (user.role === 'Orphanage') {
     children = await Child.find({ orphanage: user._id });
   }
-  let messages = [];
-  messages = await Message.find({
+
+  const messages = await Message.find({
     $or: [{ senderId: user._id }, { receiverId: user._id }]
   })
     .populate('senderId', 'name email')
     .populate('receiverId', 'name email');
+
+  // 6. أرجع الـ response
   res.status(200).json({
+    token,
     data: {
       user: {
         ...user.toObject(),
-        image:user.image,
+        image: user.image,
       },
       posts,
       children,
@@ -155,9 +187,9 @@ exports.login = asyncHandler(async (req, res, next) => {
       notification,
       settings
     }
-    , token
   });
 });
+
 
 // make sure the user is logged in
 exports.protect = asyncHandler(async (req, res, next) => {

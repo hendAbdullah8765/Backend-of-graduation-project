@@ -1,6 +1,7 @@
 const { Server } = require("socket.io");
 const { getuserChatsForSocket } = require("./chatService");
 const { Messages } = require("../models/MessageModel");
+const { sendMessage } = require("./MessageService");
 
 const initializeSocket = (httpServer) => {
   const io = new Server(httpServer, {
@@ -14,8 +15,10 @@ const initializeSocket = (httpServer) => {
   io.on("connection", (socket) => {
     console.log("Socket connected:", socket.id);
 
+
     // عند فتح التطبيق
     socket.on("OpenApp", async ({ userId }) => {
+       console.log(" OpenApp event received from user:", userId);
       if (!userId) return;
 
       if (!OnlineUsers.has(userId)) {
@@ -26,36 +29,43 @@ const initializeSocket = (httpServer) => {
 
       const onlineUserIds = [...OnlineUsers.keys()];
       const chats = await getuserChatsForSocket(userId, onlineUserIds);
+      console.log(" Chats fetched:", chats);
       socket.emit("GetChats", chats);
     });
 
     // إرسال رسالة
-    socket.on("SendMessage", async ({ messageData }) => {
-      const newMessage = await Messages.create(messageData);
 
-      const onlineUserIds = [...OnlineUsers.keys()];
+socket.on("SendMessage", async ( messageData ) => {
+  console.log("incoming message",messageData)
+  try {
+    console.log("message from socket" ,messageData)
+    const newMessage = await sendMessage(messageData);
 
-      const senderSockets = OnlineUsers.get(messageData.senderId) || [];
-      const receiverSockets = OnlineUsers.get(messageData.receiverId) || [];
+    const onlineUserIds = [...OnlineUsers.keys()];
+    const senderSockets = OnlineUsers.get(messageData.senderId) || [];
+    const receiverSockets = OnlineUsers.get(messageData.receiverId) || [];
 
-      [...senderSockets, ...receiverSockets].forEach((socketId) => {
-        io.to(socketId).emit("getMessage", newMessage);
-      });
-
-      // بعت تحديث الشات للطرفين باستخدام Promise.all
-      const userIds = [messageData.senderId, messageData.receiverId];
-
-      await Promise.all(
-        userIds.map(async (userId) => {
-          const userSockets = OnlineUsers.get(userId) || [];
-          const chats = await getuserChatsForSocket(userId, onlineUserIds);
-
-          userSockets.forEach((socketId) => {
-            io.to(socketId).emit("GetChats", chats);
-          });
-        })
-      );
+    [...senderSockets, ...receiverSockets].forEach((socketId) => {
+      io.to(socketId).emit("getMessage", newMessage);
     });
+
+    // تحديث الشاتات بعد الإرسال
+    const userIds = [messageData.senderId, messageData.receiverId];
+    await Promise.all(
+      userIds.map(async (userId) => {
+        const sockets = OnlineUsers.get(userId) || [];
+        const updatedChats = await getuserChatsForSocket(userId, onlineUserIds);
+
+        sockets.forEach((sockId) => {
+          io.to(sockId).emit("GetChats", updatedChats);
+        });
+      })
+    );
+  } catch (err) {
+    console.error("SendMessage Error:", err.message);
+ }
+});
+
 
     // عند الخروج أو غلق التطبيق
     socket.on("disconnect", () => {

@@ -5,6 +5,7 @@ const {
   markNotificationAsRead,
   deleteNotification,
   clearAllNotifications,
+  getUnreadNotificationsCount
 } = require("../services/NotificationService");
 const {
   deleteNotificationValidator,
@@ -17,8 +18,11 @@ router.use(authService.protect);
 // جلب إشعارات المستخدم
 router.get('/', getUserNotifications);
 
+router.get('/notifications-unread', getUnreadNotificationsCount);
+
+
 // تعليم إشعار أنه تمت قراءته
-router.patch('/:id/read', markNotificationAsRead);
+router.patch('/read', markNotificationAsRead);
 
 // حذف إشعار معين
 router.delete('/:id',deleteNotificationValidator, deleteNotification);

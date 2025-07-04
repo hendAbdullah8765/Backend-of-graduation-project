@@ -1,4 +1,4 @@
-const admin = require("../config/firebase.configuration")
+const admin = require("../config/firebase.configuration");
 const Notification = require("../models/NotificationModel");
 const User = require("../models/UserModel");
 const Post = require("../models/PostModel");
@@ -7,12 +7,17 @@ const AdoptionRequest = require("../models/AdoptionRequestModel");
 const Message = require("../models/MessageModel");
 
 // Helper function to build and send notification
-const sendFirebaseNotification = async ({ token, title, body ,data = {} }) => {
+const sendFirebaseNotification = async ({ token, title, body, data = {} }) => {
   const message = {
     token,
     notification: { title, body },
-     data: {
-      ...data,
+    data: {
+      senderId: data.senderId?.toString(),
+      senderName: data.senderName || "",
+      senderImage: data.senderImage || "",
+      sentAt: data.sentAt || new Date().toISOString(),
+      type: data.type || "",
+      relatedId: data.relatedId?.toString() || ""
     },
     android: { priority: "high" },
     apns: {
@@ -24,8 +29,10 @@ const sendFirebaseNotification = async ({ token, title, body ,data = {} }) => {
       }
     }
   };
+
   return await admin.messaging().send(message);
 };
+
 
 // Generic function
 const createAndSendNotification = async ({ senderId, recipientId, type, relatedId, title, body }) => {
@@ -38,6 +45,7 @@ const createAndSendNotification = async ({ senderId, recipientId, type, relatedI
 
   await Notification.create({
     userId: recipientId,
+    senderId,
     type,
     relatedId,
   });
@@ -115,40 +123,57 @@ exports.getUserNotifications = async (req, res) => {
 
     const populatedNotifications = await Promise.all(
       notifications.map(async (notif) => {
-        const sender = await User.findById(notif.relatedId).select("name image");
+      const sender = await User.findById(notif.senderId).select("name image");
         let content = null;
 
-        if (["React", "Repost"].includes(notif.type)) {
-          const post = await Post.findById(notif.relatedId).select("content image");
-          content = post ? post.content : null;
+        let actionMessage = "";
 
-        } else if (notif.type === "donation") {
-          const donation = await Donation.findById(notif.relatedId).select("amount");
-          content = donation ? `Donation: ${donation.amount} EGP` : null;
+    if (notif.type === "React") {
+      const post = await Post.findById(notif.relatedId).select("content image");
+      content = post ? post.content : null;
+      actionMessage = `${sender?.name} reacted to your post`;
 
-        } else if (notif.type === "adoption_request") {
-          const adoption = await AdoptionRequest.findById(notif.relatedId).populate("childId", "name");
-          content = adoption?.childId?.name || null;
+    } else if (notif.type === "Repost") {
+      const post = await Post.findById(notif.relatedId).select("content image");
+      content = post ? post.content : null;
+      actionMessage = `${sender?.name} reposted your post`;
 
-        } else if (notif.type === "message") {
-          const message = await Message.findById(notif.relatedId).select("message");
-          content = message ? message.message : null;
-        }
+    } else if (notif.type === "donation") {
+      const donation = await Donation.findById(notif.relatedId).select("amount");
+      content = donation ? `Donation: ${donation.amount} EGP` : null;
+      actionMessage = `${sender?.name} sent a donation`;
 
-        return {
-          ...notif,
-          senderName: sender?.name,
-          senderImage: sender?.image,
-          content,
-        };
+    } else if (notif.type === "adoption_request") {
+      const adoption = await AdoptionRequest.findById(notif.relatedId).populate("childId", "name");
+      content = adoption?.childId?.name || null;
+      actionMessage = `${sender?.name} sent an adoption request`;
+
+    } else if (notif.type === "message") {
+      const message = await Message.findById(notif.relatedId).select("message");
+      content = message ? message.message : null;
+      actionMessage = `${sender?.name} sent you a message`;
+    }
+
+
+          return {
+    ...notif,
+    senderName: sender?.name,
+    senderImage: sender?.image,
+    content,
+    message: actionMessage
+    };
+
       })
     );
+  const unreadCount = notifications.filter(notif => !notif.isRead).length;
 
     res.status(200).json({
       success: true,
       results: populatedNotifications.length,
-      data: populatedNotifications
+      data: populatedNotifications,
+      unreadCount
     });
+  
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -157,19 +182,42 @@ exports.getUserNotifications = async (req, res) => {
 
 exports.markNotificationAsRead = async (req, res) => {
   try {
-    const notif = await Notification.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user._id },
-      { isRead: true },
-      { new: true }
+    const result = await Notification.updateMany(
+      { userId: req.user._id, isRead: false },
+      { $set: { isRead: true } }
     );
 
-    if (!notif) return res.status(404).json({ success: false, message: "Notification not found" });
-
-    res.status(200).json({ success: true, data: notif });
+    res.status(200).json({
+      success: true,
+      message: `${result.modifiedCount} notifications marked as read`,
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// @desc Get unread notifications count for logged in user
+// @route GET /api/v1/notifications/unread-count
+// @access Private
+exports.getUnreadNotificationsCount = async (req, res) => {
+  try {
+    const count = await Notification.countDocuments({
+      userId: req.user._id,
+      isRead: false,
+    });
+
+    res.status(200).json({
+      success: true,
+      count,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
 
 exports.deleteNotification = async (req, res) => {
   try {

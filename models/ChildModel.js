@@ -5,22 +5,13 @@ const childSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  age: {
-    type: Number,
-    required: true
-  },
-  birthdate: {
-      type: Date,
-      required: [true, 'Birthdate is required']
-  },
-
+  // age: {
+  //   type: Number,
+  //   required: true
+  // },
   gender: {
     type: String,
     enum: ['male', 'female'],
-    required: true
-  },
-  education:{
-    type: String,
     required: true
   },
   
@@ -35,18 +26,24 @@ const childSchema = new mongoose.Schema({
 
   }, 
   hairColor: {
-    type: String, 
-    enum: ['black', 'brown', 'blonde', 'red', 'gray'],
+    type: String,
+    required: true 
   },  
 
   hairStyle:{
     type: String, 
-    enum:['curly','wavy','straight']
+        required: true 
+
   },
 
   religion: {
     type: String,
-    enum: ['Muslim', 'Christian']
+        required: true 
+
+  },
+  birthdate: {
+    type: Date,
+    required: [true, 'Birthdate is required']
   },
   image: {
     type: String 
@@ -54,7 +51,6 @@ const childSchema = new mongoose.Schema({
   orphanage: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Orphanage',
-    required: true
   },
   personality:{
     type: String,
@@ -75,12 +71,13 @@ const childSchema = new mongoose.Schema({
 }
 );
 
-const setImageURL = (doc)=>{
-  if(doc.image){
-    const imageUrl =`${process.env.BASE_URL}/upload/children/${doc.image}`
-    doc.image = imageUrl;
+const setImageURL = (doc) => {
+  if (doc.image && !doc.image.startsWith('/upload/children/')) {
+    doc.image = `/upload/children/${doc.image}`;
   }
+
 }
+
 // getAll / update / getOne
 childSchema.post('init', (doc) => {
   setImageURL(doc)

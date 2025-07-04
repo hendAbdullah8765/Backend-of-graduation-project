@@ -23,6 +23,8 @@ const authService= require('../services/authService')
 // ex: We need to access postId from post router
 const router = express.Router({mergeParams: true });
 
+router.use(authService.protect);
+
 router
 .route('/')
 .post(
@@ -33,8 +35,7 @@ router
   setOrphanageIdToBody 
   ,createChildValidator
   ,addChild)
-
-.get(createFilterObj,getChildren);
+.get( createFilterObj,getChildren);
 
 router
 .route('/:id')

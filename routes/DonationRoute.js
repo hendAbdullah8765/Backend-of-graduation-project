@@ -1,5 +1,4 @@
 const express = require("express");
-const authService = require("../services/authService");
 const {
   getAllDonations,
   getDonationById,
@@ -15,6 +14,7 @@ const {
 } = require("../utils/validators/donationValidator");
 
 const router = express.Router();
+const authService = require("../services/authService");
 
 router.use(authService.protect);
 

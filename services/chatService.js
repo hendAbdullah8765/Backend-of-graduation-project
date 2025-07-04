@@ -87,9 +87,10 @@ exports.userAllChats = async (req, res) =>  {
     });
 
     return res.json({
-      Message: "All User Chats",
-      LatestChatAndMessages,
       success: true,
+      Message: "All User Chats",
+      results: LatestChatAndMessages.length,
+      chats: LatestChatAndMessages,
     });
   } catch (err) {
     return res.json({ message: err.message, status: "error", success: false });
@@ -170,53 +171,60 @@ exports.getuserChatsForSocket = async (id, onlineUserIds) => {
       "members",
       "name email image"
     ),
-    Message.find().select("text isSeen chatId senderId createdAt"),
+    Message.find().select("message image isSeen chatId senderId createdAt"),
   ]);
 
   const formattedChats = await Promise.all(
-    allChats.map(async (chat) => {
-      const messages = allMessages.filter(
-        (msg) => msg.chatId.toString() === chat.id.toString()
-      );
+  allChats.map(async (chat) => {
+    const messages = allMessages.filter(
+      (msg) => msg.chatId.toString() === chat.id.toString()
+    );
 
-      if (!messages.length) return null;
+    if (!messages.length) return null;
 
-      messages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    messages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    const lastMessage = messages[0];
 
-      const latestMsg = {
-        ...messages[0]._doc,
-        createdAt: moment(messages[0].createdAt)
-          .tz("Africa/Cairo")
-          .format("YYYY-MM-DD HH:mm:ss"),
-        isSender: messages[0].senderId.toString() === id.toString(),
-      };
+    // ✅ نجيب معلومات المرسل
+    const sender = await User.findById(lastMessage.senderId).select("name image");
 
-      const otherUser = Array.isArray(chat.members)
-  ? chat.members.find(
-      (member) =>
-        member &&
-        member._id &&
-        member._id.toString() !== id.toString()
-    )
-  : null;
+    const latestMsg = {
+      text: lastMessage.message || null,
+      image: lastMessage.image || null,
+      createdAt: moment(lastMessage.createdAt)
+        .tz("Africa/Cairo")
+        .format("YYYY-MM-DD HH:mm:ss"),
+      senderId: lastMessage.senderId,
+      senderImage: sender?.image || null,
+      isSeen: lastMessage.isSeen,
+      isSender: lastMessage.senderId.toString() === id.toString(),
+    };
 
-if (!otherUser) return null; // تأمين عشان ميبعتش null
+    const otherUser = Array.isArray(chat.members)
+      ? chat.members.find(
+          (member) =>
+            member &&
+            member._id &&
+            member._id.toString() !== id.toString()
+        )
+      : null;
 
+    if (!otherUser) return null;
 
-      const notSeenCount = messages.filter(
-        (msg) => !msg.isSeen && msg.senderId.toString() !== id.toString()
-      ).length;
+    const notSeenCount = messages.filter(
+      (msg) => !msg.isSeen && msg.senderId.toString() !== id.toString()
+    ).length;
 
-      return {
-        chatId: chat.id,
-        lastMessage: latestMsg,
-        user: otherUser,
-        notSeenCount,
-        isOnline: onlineUserIds.includes(otherUser._id.toString()),
-      };
-    })
-  );
-
+    return {
+      chatId: chat.id,
+      lastMessage: latestMsg,
+      user: otherUser,
+      notSeenCount,
+      isOnline: onlineUserIds.includes(otherUser._id.toString()),
+    };
+  })
+);
   const cleaned = formattedChats.filter(Boolean);
 
   cleaned.sort(

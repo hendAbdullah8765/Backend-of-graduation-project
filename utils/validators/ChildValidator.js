@@ -1,23 +1,19 @@
 const slugify = require('slugify');
 const { check , body } = require('express-validator');
 const validatorMiddleware = require('../../middlewares/validatorMiddleware');
-const Orphanage =require('../../models/OrphanageModel')
 
 exports.createChildValidator = [
   check('name')
     .notEmpty().withMessage('Child name is required')
     .isLength({ min: 2 }).withMessage('Child name is too short'),
 
-  check('age')
-    .notEmpty().withMessage('Child age is required')
-    .isInt({ min: 0 }).withMessage('Age must be a positive number'),
+  check('birthdate').optional()
+
+    .notEmpty().withMessage('Child birthdate is required'),
 
   check('gender')
     .notEmpty().withMessage('Gender is required')
-    .isIn(['male', 'female']).withMessage('Gender must be male or female'),
-
-  check('education')
-    .notEmpty().withMessage('Educational level is required'),
+    .withMessage('Gender must be male or female'),
 
   check('skinTone')
     .notEmpty().withMessage('Skin color is required')
@@ -25,33 +21,35 @@ exports.createChildValidator = [
 
   check('hairColor')
     .optional()
-    .isIn(['black', 'brown', 'blonde', 'red', 'gray']).withMessage('Invalid hair color'),
+   .notEmpty().withMessage('Invalid hair color'),
 
   check('hairStyle')
-    .isIn(['curly', 'wavy', 'straight']).withMessage('Invalid hair style'),
+    .optional()
+    .notEmpty().withMessage('Invalid hair style'),
 
   check('religion')
-    .isIn(['Muslim', 'Christian']).withMessage('Invalid religion'),
+    .optional()
+    .notEmpty().withMessage('Invalid religion'),
   
   check('image')
     .optional()
     .isURL().withMessage('Photo must be a valid URL'),
   
-  check('orphanage')
-    .notEmpty().withMessage('Orphanage ID is required')
-    .isMongoId().withMessage('Invalid orphanage ID format')
-    .custom((orphanageId) =>
-       Orphanage.findById(orphanageId).then((orphanage) => {
-        if (!orphanage){
-          return Promise
-          .reject
-          (new Error (`No Orphanage for this id: ${orphanageId}`))
-        }
-      })
-    ) .custom((val, { req }) => {
-            req.body.slug = slugify(val);
-            return true;
-          }),
+  // check('orphanage')
+  //   .notEmpty().withMessage('Orphanage ID is required')
+  //   .isMongoId().withMessage('Invalid orphanage ID format')
+  //   .custom((orphanageId) =>
+  //      Orphanage.findById(orphanageId).then((orphanage) => {
+  //       if (!orphanage){
+  //         return Promise
+  //         .reject
+  //         (new Error (`No Orphanage for this id: ${orphanageId}`))
+  //       }
+  //     })
+  //   ) .custom((val, { req }) => {
+  //           req.body.slug = slugify(val);
+  //           return true;
+  //         }),
 
   validatorMiddleware
 ];

@@ -61,6 +61,7 @@ exports.getOne = (Model, populateOptions) =>
   });
 
 
+// eslint-disable-next-line default-param-last
 exports.getAll = (Model, modelName = '', populateOptions) =>
   asyncHandler(async (req, res) => {
     let filter = {};
@@ -68,18 +69,14 @@ exports.getAll = (Model, modelName = '', populateOptions) =>
       filter = req.filterObj;
     }
 
-    const documentsCounts = await Model.countDocuments();
-    let query = Model.find(filter).sort({
-      createdAt: -1,
-    });
+    const query = Model.find(filter).sort({ createdAt: -1 });
 
     const apiFeatures = new ApiFeatures(query, req.query)
       .search(modelName)
       .filter()
-      .limitFields()
-      .paginate(documentsCounts);
+      .limitFields(); // ✅ بدون paginate
 
-    let { mongooseQuery, paginationResult } = apiFeatures;
+    let { mongooseQuery } = apiFeatures;
 
     if (populateOptions) {
       mongooseQuery = mongooseQuery.populate(populateOptions);
@@ -87,8 +84,9 @@ exports.getAll = (Model, modelName = '', populateOptions) =>
 
     const documents = await mongooseQuery;
 
-    res
-      .status(200)
-      .json({ results: documents.length, paginationResult, data: documents });
+    res.status(200).json({
+      results: documents.length,
+      data: documents,
+    });
   });
 

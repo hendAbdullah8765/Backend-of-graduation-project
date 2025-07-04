@@ -221,50 +221,69 @@ exports.updateLoggedUserData = asyncHandler(async (req, res, next) => {
     currentChildren,
     totalCapacity,
     staffCount,
-    workDays,
-    workHours,
+    workSchedule,
     establishedDate,
     birthdate,
     gender,
     image,
   } = req.body;
-  const updatedUser = await User.findByIdAndUpdate(req.user._id, {
-    name,
-    email,
-    phone,
-    address,
-    birthdate,
-    gender,
-    image,
-  }, { new: true });
 
+  // تحديث بيانات اليوزر
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      name,
+      email,
+      phone,
+      address,
+      birthdate,
+      gender,
+      image,
+    },
+    { new: true }
+  );
+
+  // لو اليوزر عبارة عن دار أيتام (Orphanage)
   if (updatedUser.role === 'Orphanage') {
-    const updatedOrphanage = await Orphanage.findByIdAndUpdate(updatedUser.orphanage, {
-      adminName,
-      currentChildren,
-      totalCapacity,
-      staffCount,
-      workSchedule: {
-        workDays,
-        workHours,
+    const currentOrphanage = await Orphanage.findById(updatedUser.orphanage);
+
+    const updatedOrphanage = await Orphanage.findByIdAndUpdate(
+      updatedUser.orphanage,
+      {
+        adminName,
+        currentChildren,
+        totalCapacity,
+        staffCount,
+        image,
+        establishedDate,
+        workSchedule: {
+          workDays: workSchedule?.workDays || currentOrphanage?.workSchedule?.workDays,
+          workHours: workSchedule?.workHours || currentOrphanage?.workSchedule?.workHours,
+        }
       },
-      establishedDate,
-    }, { new: true });
+      { new: true }
+    );
+
     return res.status(200).json({
       data: {
         user: updatedUser,
         orphanage: updatedOrphanage,
       },
-      
     });
   }
+
+  // لو مش دار أيتام، رجع بيانات اليوزر فقط مع التوكن
   const token = GenerateToken(updatedUser._id);
 
   res.status(200).json({
-    data: updatedUser,
-    token
-  });
+    data: {
+      user: updatedUser,
+    },
+    token,
+ });
 });
+
+
 
 
 // @desc  Deactivate logged user

@@ -55,15 +55,6 @@ exports.createUserValidator = [
   check('adminName').if(body('role').equals('Orphanage'))
     .not().isEmpty().withMessage('Name is required for Orphanage role'),
 
-  check('currentChildren').if(body('role').equals('Orphanage'))
-    .isInt({ min: 0 }).withMessage('CurrentChildren must be a non-negative number'),
-
-  check('totalCapacity').if(body('role').equals('Orphanage'))
-    .isInt({ min: 1 }).withMessage('TotalCapacity must be at least 1'),
-
-  check('staffCount').if(body('role').equals('Orphanage'))
-    .isInt({ min: 0 }).withMessage('StaffCount must be a non-negative number'),
-
   check('establishedDate').if(body('role').equals('Orphanage'))
     .notEmpty().withMessage('EstablishedDate is required')
     .isISO8601().withMessage('Invalid date format'),
