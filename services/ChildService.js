@@ -10,15 +10,15 @@ exports.uploadChildImage = uploadSingleImage("image");
 
 //image processing
 exports.resizeImage = asyncHandler(async (req, res, next) => {
-  const filename = `children-${uuidv4()}-${Date.now()}.jpeg`;
-  sharp(req.file.buffer)
-    // .resize(500 , 500)
-    .toFormat("jpeg")
-    .jpeg({ quality: 100 })
-    .toFile(`upload/children/${filename}`);
-  //save image into our db
-  req.body.image = filename;
-
+  if (req.file) {
+    const imageFileName = `children-${uuidv4()}-${Date.now()}.jpeg`;
+    await sharp(req.file.buffer)
+      // .resize(2000, 1333)
+      .toFormat("jpeg")
+      .jpeg({ quality: 100 })
+      .toFile(`upload/children/${imageFileName}`);
+    req.body.image = imageFileName;
+  }
   next();
 })
 // nested route

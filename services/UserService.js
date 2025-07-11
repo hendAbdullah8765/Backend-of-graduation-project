@@ -48,9 +48,51 @@ exports.getUser = asyncHandler(async (req, res, next) => {
   }
 
   const posts = await Post.find({ user: user._id })
-    .select('content createdAt');
+    .populate([
+      {
+        path: 'user',
+        select: 'name image repostCount'
+      },
+      {
+        path: 'repostedFrom',
+        select: 'content user image',
+        populate: {
+          path: 'user',
+          select: 'name'
+        }
+      }
+    ]);
 
-  const messages = await Message.find({
+  const userId = req.user._id.toString();
+
+  const postsWithExtras = await Promise.all(
+    posts.map(async (post) => {
+      const reacts = await React.find({ post: post._id }).populate('user', 'name image');
+      const myReact = reacts.find(r => r.user._id.toString() === userId);
+      const repostsCount = await Post.countDocuments({ repostedFrom: post._id });
+
+      return {
+        ...post.toObject(),
+        reactsCount: reacts.length,
+        reacts,
+        myReact: myReact || null,
+        repostsCount
+      };
+    })
+  );
+
+  // لو المستخدم دار أيتام، هات بيانات الجدول
+  let about = null;
+  if (user.role === 'Orphanage') {
+    const orphanage = await Orphanage.findById(user.orphanage);
+    about = {
+      phone: user.phone,
+      workDays: orphanage?.workSchedule?.workDays || [],
+      workHours: orphanage?.workSchedule?.workHours || "",
+      establishedDate: orphanage?.establishedDate || null,
+    };
+  }
+ const messages = await Message.find({
     $or: [
       { senderId: req.user._id, receiverId: user._id },
       { senderId: user._id, receiverId: req.user._id },
@@ -58,13 +100,18 @@ exports.getUser = asyncHandler(async (req, res, next) => {
   }).sort({ createdAt: 1 });
 
   res.status(200).json({
+    success: true,
     data: {
       user,
-      posts,
-      messages,
-    },
+      about, // ✅ معلومات الدار (لو موجودة)
+      posts: postsWithExtras,
+      messages
+    }
   });
 });
+
+
+
 exports.getAllOrphanages = async (req, res) => {
   try {
     const orphanages = await Orphanage.find()
@@ -143,7 +190,6 @@ exports.getLoggedUserData = asyncHandler(async (req, res, next) => {
     return next(new ApiError('User not found', 404));
   }
 
-  // جلب البوستات الخاصة بالمستخدم
   const posts = await Post.find({ user: user._id })
     .populate([
       {
@@ -178,7 +224,6 @@ exports.getLoggedUserData = asyncHandler(async (req, res, next) => {
     })
   );
 
-  // لو المستخدم دار أيتام، هات بيانات الجدول
   let about = null;
   if (user.role === 'Orphanage') {
     const orphanage = await Orphanage.findById(user.orphanage);

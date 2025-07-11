@@ -1,11 +1,11 @@
-const asyncHandler = require('express-async-handler')
+const asyncHandler = require("express-async-handler");
 const factory = require("./handlerFactory");
 const DonationItem = require("../models/DonationItemModel");
 const { sendDonationNotification } = require("./NotificationService"); // غيّري المسار حسب مكان الملف
 
-
 // Helper to generate receipt number
-const generateReceiptNumber = () => `ITEM-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+const generateReceiptNumber = () =>
+  `ITEM-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
 // Create Donation Item
 exports.createDonationItem = asyncHandler(async (req, res) => {
@@ -40,25 +40,29 @@ exports.createDonationItem = asyncHandler(async (req, res) => {
     deliveryLocation,
     receiptNumber,
   });
-       const fullDonation = await DonationItem.findById(donationItem._id)
-      .populate("orphanageId", "name address")
-      .populate("userId", "name image");
+  const fullDonation = await DonationItem.findById(donationItem._id)
+    .populate("orphanageId", "name address")
+    .populate("userId", "name image");
 
-      if (req.user._id.toString() !== orphanageId.toString()) {
-  console.log("Sending donation Notification");
-  await sendDonationNotification(req.user._id, orphanageId, donationItem._id, true); // isItem = true
-}
-
+  if (req.user._id.toString() !== orphanageId.toString()) {
+    console.log("Sending donation Notification");
+    await sendDonationNotification(
+      req.user._id,
+      orphanageId,
+      donationItem._id,
+      true
+    ); // isItem = true
+  }
 
   res.status(201).json({ success: true, data: fullDonation });
 });
 
 // Get all donation items
 exports.getAllDonationItems = asyncHandler(async (req, res) => {
-    const orphanageId = req.user.orphanage || req.user._id;
-   console.log("orphanageId from token:", orphanageId);
+  const orphanageId = req.user.orphanage || req.user._id;
+  console.log("orphanageId from token:", orphanageId);
 
-  const donations = await DonationItem.find({ orphanageId: orphanageId})
+  const donations = await DonationItem.find({ orphanageId: orphanageId })
     .populate("userId", "name image")
     .populate("orphanageId", "name image address");
 
@@ -70,8 +74,12 @@ exports.getAllDonationItems = asyncHandler(async (req, res) => {
     orphanageName: d.orphanageId?.name || "",
     itemType: d.itemType,
     deliveryMethod: d.deliveryMethod,
+    isReadyForPickup: d.isReadyForPickup,
     deliveryDate: d.deliveryDate,
+    clothingCondition: d.clothingCondition,
     status: d.status,
+    foodQuantity: d.foodQuantity,
+    piecesCount: d.piecesCount,
     createdAt: d.createdAt,
   }));
 
@@ -85,7 +93,9 @@ exports.getDonationItemById = async (req, res) => {
       .populate("orphanageId", "name image");
 
     if (!donation) {
-      return res.status(404).json({ success: false, message: "Donation not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Donation not found" });
     }
 
     const donationDetails = {

@@ -29,7 +29,7 @@ router
 .route('/')
 .post(
   authService.protect,
-  authService.allowedTo('admin' , 'Orphanage'),
+  authService.allowedTo('Orphanage'),
   uploadChildImage,
   resizeImage,
   setOrphanageIdToBody 
@@ -42,7 +42,7 @@ router
 .get(getChildValidator ,getChild)
 .put(
   authService.protect,
-  authService.allowedTo('admin' , 'Orphanage'),
+  authService.allowedTo('Orphanage'),
   uploadChildImage,
   resizeImage,
   updateChildValidator 
@@ -50,7 +50,7 @@ router
 
 .delete(
   authService.protect,
-  authService.allowedTo('admin' , 'Orphanage'),    
+  authService.allowedTo('Orphanage'),    
     deleteChildValidator
     ,deleteChild);
 module.exports = router;

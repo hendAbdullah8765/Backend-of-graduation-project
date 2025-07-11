@@ -61,10 +61,7 @@ const childSchema = new mongoose.Schema({
     default: Date.now
   },
   
-  slug: {
-    type: String
-    
-  }
+
 },
 {
     timestamps: true,
