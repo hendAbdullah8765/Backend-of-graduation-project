@@ -31,10 +31,13 @@ exports.createDonation = async (req, res) => {
       cardNumber,
       cvc,
       expiryDate,
-      status: "completed", // لو لسه مفيش بوابة دفع
+      status: "completed", 
     });
-      
-    await sendDonationNotification(req.user._id, orphanageId, donation._id);
+    
+        if (req.user._id.toString() !== orphanageId.toString()) {
+          console.log("Sending donation Notification");
+        await sendDonationNotification(req.user._id, orphanageId, donation._id ,false);
+        }
 
     res.status(201).json({ success: true, data: donation });
   } catch (err) {
@@ -44,7 +47,10 @@ exports.createDonation = async (req, res) => {
 
 exports.getAllDonations = async (req, res) => {
   try {
-    const donations = await Donation.find({ orphanageId: req.user._id })
+    const orphanageId = req.user.orphanage || req.user._id;
+   console.log("orphanageId from token:", orphanageId);
+
+    const donations = await Donation.find({ orphanageId: orphanageId })
       .populate("userId", "name image")
       .populate("orphanageId", "name");
    const formatted = donations.map(d => ({
@@ -56,7 +62,7 @@ exports.getAllDonations = async (req, res) => {
         paymentMethod: d.paymentMethod,
         receiptNumber: d.receiptNumber,
         createdAt: d.createdAt,
-        donationType: "money"
+        itemType: "money"
     }));
 
     res.status(200).json({ success: true, data: formatted });

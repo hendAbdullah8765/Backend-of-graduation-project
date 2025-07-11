@@ -5,21 +5,19 @@ const { Schema } = mongoose;
 const adoptionRequestSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: "User" },
   childId: { type: Schema.Types.ObjectId, ref: "Child", required: true },
-
+  orphanage: { type: Schema.Types.ObjectId, ref: "Orphanage", required: true },
   reason: { type: String },
   phone: { type: String },
   location: { type: String },
   monthlyIncome: { type: Number },
   occupation: { type: String },
-
   birthDate: { type: Date }, // ✅ ضيفي ده
   religion: { type: String }, // ✅ ضيفي ده
   maritalStatus: { type: String }, // ✅ الاسم الصحيح، انتي كنتِ كاتبة martialStatus
-
+  status: { type: String, enum: ["pending", "approved" ,"rejected"], default: "pending" },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date },
 });
-
 
 // auto-stamp updatedAt
 adoptionRequestSchema.pre("findOneAndUpdate", function () {

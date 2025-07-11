@@ -9,15 +9,15 @@ const donationItemSchema = new Schema({
   itemType: { type: String, enum: ["clothes", "food"], required: true },
 
   // Clothes
-  clothingCondition: { type: String, enum: ["new", "good"] },
+  clothingCondition: { type: String,  },
   piecesCount: { type: Number },
 
   // Food
-  foodType: { type: String, enum: ["cooked", "dry", "canned"] },
+  foodType: { type: String,},
   foodQuantity: { type: String },
 
   isReadyForPickup: { type: Boolean },
-  deliveryMethod: { type: String, enum: ["self_delivery", "home_pickup"], required: true },
+  deliveryMethod: { type: String, required: true },
   deliveryDate: { type: Date },
   deliveryTime: { type: String },
   deliveryLocation: { type: String },

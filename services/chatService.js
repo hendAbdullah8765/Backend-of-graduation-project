@@ -97,8 +97,6 @@ exports.userAllChats = async (req, res) =>  {
   }
 };
 
-
-
 // ✅ جلب شات معين بين شخصين
 exports.getUserChat = async (req, res) => {
   try {
@@ -165,9 +163,11 @@ exports.deleteUserChat = async (req, res) => {
 };
 
 // ✅ جلب أحدث الشاتات والمحادثات (للسوكت)
-exports.getuserChatsForSocket = async (id, onlineUserIds) => {
+exports.getuserChatsForSocket = async (id) => {
   const [allChats, allMessages] = await Promise.all([
-    ChatModel.find({ members: id, userDelete: { $ne: id } }).populate(
+    ChatModel.find({ members: id, userDelete: { $ne: id } })
+    .sort({ createdAt: -1 })
+    .populate(
       "members",
       "name email image"
     ),
@@ -221,7 +221,6 @@ exports.getuserChatsForSocket = async (id, onlineUserIds) => {
       lastMessage: latestMsg,
       user: otherUser,
       notSeenCount,
-      isOnline: onlineUserIds.includes(otherUser._id.toString()),
     };
   })
 );

@@ -40,17 +40,27 @@ exports.createDonationItem = asyncHandler(async (req, res) => {
     deliveryLocation,
     receiptNumber,
   });
-  await sendDonationNotification(req.user._id, orphanageId, donationItem._id);
+       const fullDonation = await DonationItem.findById(donationItem._id)
+      .populate("orphanageId", "name address")
+      .populate("userId", "name image");
+
+      if (req.user._id.toString() !== orphanageId.toString()) {
+  console.log("Sending donation Notification");
+  await sendDonationNotification(req.user._id, orphanageId, donationItem._id, true); // isItem = true
+}
 
 
-  res.status(201).json({ success: true, data: donationItem });
+  res.status(201).json({ success: true, data: fullDonation });
 });
 
 // Get all donation items
 exports.getAllDonationItems = asyncHandler(async (req, res) => {
-  const donations = await DonationItem.find({ orphanageId: req.user._id})
+    const orphanageId = req.user.orphanage || req.user._id;
+   console.log("orphanageId from token:", orphanageId);
+
+  const donations = await DonationItem.find({ orphanageId: orphanageId})
     .populate("userId", "name image")
-    .populate("orphanageId", "name");
+    .populate("orphanageId", "name image address");
 
   const formatted = donations.map((d) => ({
     id: d._id,

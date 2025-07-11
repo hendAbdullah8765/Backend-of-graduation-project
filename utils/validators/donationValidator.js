@@ -16,7 +16,6 @@ exports.createDonationValidator = [
   body("paymentMethod")
     .notEmpty()
     .withMessage("paymentMethod is required")
-    .isIn(["cash", "card", "paypal"])
     .withMessage("Invalid paymentMethod"),
   body("status")
     .optional()

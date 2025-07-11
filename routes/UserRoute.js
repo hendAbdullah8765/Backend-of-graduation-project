@@ -21,7 +21,8 @@ const {
   updateLoggedUserData,
   deleteLoggedUserData,
   reActivateUser,
-  saveNotificationToken
+  saveNotificationToken,
+  getAllOrphanages
 } = require("../services/UserService");
 
 const authService = require("../services/authService");
@@ -55,6 +56,8 @@ router.put(
 router.delete("/deleteMe", authService.protect, deleteLoggedUserData);
 
 router.put("/reactiveMe", authService.protect, reActivateUser);
+
+router.get("/orphanages", authService.protect, getAllOrphanages);
 
 router.put(
   "/changePassword/:id",

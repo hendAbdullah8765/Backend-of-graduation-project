@@ -27,70 +27,65 @@ exports.resizeMessageImages = asyncHandler(async (req, res, next) => {
   next();
 });
 
-exports.sendMessage = async (messageData) => {
-  const { chatId, senderId, receiverId, message, image } = messageData;
-  console.log("incoming message",messageData)
+exports.sendMessage = async ( senderId, receiverId, message, image) => {
+   
+  let finalChatId 
 
- if(!senderId || !receiverId){
-  throw new Error("sender &recevir are required")
- }
+    if (senderId && receiverId) {
 
-  let finalChatId = chatId;
-
-  // لو مفيش chatId، دوري أو أنشئي واحد
-  if (!chatId) {
-    let existingChat = await Chat.findOne({
-      members: { $all: [senderId, receiverId] },
-    });
-
-    if (!existingChat) {
-      existingChat = await Chat.create({
-        members: [senderId, receiverId],
+      let existingChat = await Chat.findOne({
+        members: { $all: [senderId, receiverId] },
       });
-    }
+
+      if (!existingChat) {
+        existingChat = await Chat.create({
+          members: [senderId, receiverId],
+        });
+      }
 
     finalChatId = existingChat._id;
-  }
+    }
 
-  // أنشئي الرسالة
-  const newMessage = await Message.create({
-    chatId: finalChatId,
-    senderId,
-    receiverId,
-    message,
-    image,
-  });
-   
-  console.log("chat created ",senderId ,receiverId )
-  const populatedMessage = await Message.findById(newMessage._id)
-    .populate("chatId")
-    .populate("senderId", "name email image");
+    // إنشاء الرسالة
+    const newMessage = await Message.create({
+      chatId: finalChatId,
+      senderId,
+      receiverId,
+      message,
+      image,
+    });
 
-  return populatedMessage;
+    // Populate للرد النهائي
+    const populatedMessage = await Message.findById(newMessage._id)
+      .populate("chatId")
+      .populate("senderId", "name email image");
+
+    return populatedMessage
+  
 };
 
 
 // ✅ جلب كل الرسائل داخل شات
-exports.getMessages = async (req, res) => {
-  const { chatId } = req.params;
-
-  try {
-    const messages = await Message.find({ chatId })
-      .sort({ createdAt: 1 }) // ترتيب حسب الأقدم
-      .populate('senderId', 'name image') // لو حابة تجيبي بيانات المرسل
+exports.getMessages = async (senderId, receiverId) => {
+    const messages = await Message.find({
+      $or: [
+        { senderId, receiverId },
+        { senderId: receiverId, receiverId: senderId }
+      ]
+    })
+      .sort({ createdAt: -1 })
+      .populate('senderId', 'name image')
       .populate('receiverId', 'name image');
-
-    res.status(200).json({ success: true, data: messages });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+    
+      return messages
+  
 };
 
-// ✅ تعليم الرسائل بأنها "مرئية"
-exports.markMessagesAsSeen = async (req, res) => {
-  const { chatId, userId } = req.body;
 
-  try {
+// ✅ تعليم الرسائل بأنها "مرئية"
+exports.markMessagesAsSeen = async (chatId,  userId) => {
+
+  
     await Message.updateMany(
       {
         chatId,
@@ -99,15 +94,8 @@ exports.markMessagesAsSeen = async (req, res) => {
       },
       { isSeen: true }
     );
-
-    res.status(200).json({
-      success: true,
-      message: 'Messages marked as seen',
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
   }
-};
+  
 exports.deleteMessage = async (req, res) => {
   const  messageId  = req.params.id;
 

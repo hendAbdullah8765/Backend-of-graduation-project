@@ -57,8 +57,6 @@ exports.getUser = asyncHandler(async (req, res, next) => {
     ],
   }).sort({ createdAt: 1 });
 
-
-
   res.status(200).json({
     data: {
       user,
@@ -67,8 +65,23 @@ exports.getUser = asyncHandler(async (req, res, next) => {
     },
   });
 });
+exports.getAllOrphanages = async (req, res) => {
+  try {
+    const orphanages = await Orphanage.find()
+    .select("name image address");
 
-
+    res.status(200).json({
+      success: true,
+      results: orphanages.length,
+      data: orphanages,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
 
 // @desc  add user
 // @route user /api/v1/user 

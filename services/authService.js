@@ -155,7 +155,7 @@ try {
   const donation = await Donation.find({ userId: user._id })
     .populate('orphanageId', 'name');
   const notification = await Notification.find({ userId: user._id })
-    .populate('orphanageId', 'name');
+    .populate('userId', 'name');
   const settings = await Setting.find({ userId: user._id })
     .populate('orphanageId', 'name');
 

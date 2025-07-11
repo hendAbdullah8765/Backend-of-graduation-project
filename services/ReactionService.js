@@ -65,7 +65,7 @@ exports.createReaction = asyncHandler(async (req, res) => {
     await existingReaction.save();
     await existingReaction.populate([
       { path: 'user', select: 'name' },
-      { path: 'post', select: 'content' }
+      { path: 'post', select: 'content ' }
     ]);
     return res
       .status(200)
@@ -75,12 +75,13 @@ exports.createReaction = asyncHandler(async (req, res) => {
   const reaction = await Reaction.create({ type, post, user });
   await reaction.populate([
     { path: 'user', select: 'name' },
-    { path: 'post', select: 'content' }
+    { path: 'post', select: 'content user' }
   ]);
 
 if (reaction.post.user.toString() !== user.toString()) {
   await sendReactNotification(user, reaction.post.user, post);
 }
+
   res.status(201).json({ message: "Reaction added", data: reaction });
 });
 

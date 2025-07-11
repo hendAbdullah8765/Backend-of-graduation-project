@@ -74,7 +74,7 @@ exports.getAll = (Model, modelName = '', populateOptions) =>
     const apiFeatures = new ApiFeatures(query, req.query)
       .search(modelName)
       .filter()
-      .limitFields(); // ✅ بدون paginate
+      .limitFields();
 
     let { mongooseQuery } = apiFeatures;
 

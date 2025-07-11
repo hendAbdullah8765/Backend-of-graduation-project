@@ -8,6 +8,9 @@ const Message = require("../models/MessageModel");
 
 // Helper function to build and send notification
 const sendFirebaseNotification = async ({ token, title, body, data = {} }) => {
+  console.log(" Sending FCM to:", token);
+  console.log(" Payload:", { title, body, data });
+
   const message = {
     token,
     notification: { title, body },
@@ -30,8 +33,30 @@ const sendFirebaseNotification = async ({ token, title, body, data = {} }) => {
     }
   };
 
-  return await admin.messaging().send(message);
+  try {
+    const response = await admin.messaging().send(message);
+    console.log(" FCM sent successfully:", response);
+    return {
+      success: true,
+      response,
+    };
+  } catch (error) {
+    console.error(" Error sending FCM:", error);
+
+    if (error.code === "messaging/registration-token-not-registered") {
+      console.warn(" Token not registered! You should remove it from your DB:", token);
+      // Example:
+      // await yourDb.collection("users").doc(userId).update({ fcmToken: FieldValue.delete() });
+    }
+
+    // ✅ Return success false, don’t throw
+    return {
+      success: false,
+      error: error.message,
 };
+}
+};
+
 
 
 // Generic function
@@ -49,7 +74,7 @@ const createAndSendNotification = async ({ senderId, recipientId, type, relatedI
     type,
     relatedId,
   });
-
+ console.log(recipient.notificationToken)
   return await sendFirebaseNotification({
     token: recipient.notificationToken,
     title,
@@ -76,7 +101,7 @@ exports.sendReactNotification = async (senderId, postOwnerId, postId) => createA
   });
 
 // ✅ 2. Message Notification
-exports.sendMessageNotification = async (senderId, message ,receiverId) => createAndSendNotification({
+exports.sendMessageNotification = async (senderId ,receiverId , message) => createAndSendNotification({
     senderId,
     recipientId: receiverId,
     type: "message",
@@ -86,14 +111,16 @@ exports.sendMessageNotification = async (senderId, message ,receiverId) => creat
   });
 
 // ✅ 3. Donation Notification
-exports.sendDonationNotification = async (senderId, orphanageId, donationId) => createAndSendNotification({
+exports.sendDonationNotification = async (senderId, orphanageId, donationId, isItem = false) =>
+  createAndSendNotification({
     senderId,
     recipientId: orphanageId,
     type: "donation",
     relatedId: donationId,
-    title: "New Donation Request",
-    body: "You received a new donation request"
+    title: "New Donation",
+    body: isItem ? "You received a new donation item" : "You received a new donation request"
   });
+
 
 // ✅ 4. Adoption Notification
 exports.sendAdoptionNotification = async (senderId, orphanageId, adoptionRequestId) => createAndSendNotification({

@@ -16,7 +16,8 @@ const {
   resizePostImages,
   setUserIdToBody,
   allowedToModifyPost,
-  createRepost
+  createRepost,
+  getSavedPosts
 } = require('../services/PostService');
 const authService = require("../services/authService");
 
@@ -34,6 +35,7 @@ router.post(
   authService.protect,
   createRepost
 );
+router.post('/saved-posts',  authService.protect , getSavedPosts);
 
 router
   .route('/')

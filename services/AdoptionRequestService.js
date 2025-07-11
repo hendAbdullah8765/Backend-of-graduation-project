@@ -6,10 +6,14 @@ const User =require("../models/UserModel")
 
 exports.getAdoptionRequests = async (req, res) => {
   try {
-    const requests = await AdoptionRequest.find({ orphanageId: req.user._id})
+
+    const orphanageId = req.user.orphanage || req.user._id;
+   console.log("orphanageId from token:", orphanageId);
+
+    const requests = await AdoptionRequest.find({ orphanage: orphanageId }) 
       .sort({ createdAt: -1 })
       .populate("userId", "name image")
-      .populate("childId", "name age image gender education religion");
+      .populate("childId", "name eyeColor image gender skinTone religion hairColor hairStyle personality birthdate createdAt timestamps");
 
     res.status(200).json({ success: true, data: requests });
   } catch (err) {
@@ -21,7 +25,7 @@ exports.getAdoptionRequestById = async (req, res) => {
   try {
     const request = await AdoptionRequest.findById(req.params.id)
       .populate("userId", "name image")
-      .populate("childId", "name age image gender education religion");
+      .populate("childId", "name eyeColor image gender skinTone religion hairColor hairStyle personality birthdate createdAt timestamps");
 
     if (!request) {
       return res.status(404).json({ success: false, message: "Request not found" });
@@ -36,9 +40,9 @@ exports.getAdoptionRequestById = async (req, res) => {
 exports.createAdoptionRequest = async (req, res) => {
   try {
     const {
+      orphanage,
       childId,
       phone,
-      birthDate,
       maritalStatus,
       occupation,
       monthlyIncome,
@@ -49,9 +53,9 @@ exports.createAdoptionRequest = async (req, res) => {
 
     const newRequest = await AdoptionRequest.create({
       userId: req.user._id,
+      orphanage,
       childId,
       phone,
-      birthDate,
       maritalStatus,
       occupation,
       monthlyIncome,
@@ -60,16 +64,13 @@ exports.createAdoptionRequest = async (req, res) => {
       reason,
     });
 
-    // ✅ جيبي orphanageId من الطفل
     const child = await Child.findById(childId).select('orphanage');
     const orphanageId = child?.orphanage;
     if (!orphanageId) {
       return res.status(400).json({ success: false, message: 'Child has no orphanage assigned' });
     }
 
-    // ✅ هات اليوزر اللي رابط orphanage دي
     const orphanageUser = await User.findOne({ orphanage: orphanageId });
-
     if (orphanageUser) {
       await sendAdoptionNotification(req.user._id, orphanageUser._id, newRequest._id);
     }

@@ -242,13 +242,73 @@ exports.createRepost = asyncHandler(async (req, res, next) => {
   repost.user.image = `/upload/users/${repost.user.image}`;
 }
 
-
-  if (originalPost.user.toString() !== req.user._id.toString()) {
+if (originalPost.user.toString() !== req.user._id.toString()) {
     console.log("Sending Repost Notification");
     await sendRepostNotification(req.user._id, originalPost.user, repost._id);
   }
+
 
   res.status(201).json({ data: repost });
 });
 
 
+
+exports.getSavedPosts = async (req, res) => {
+  try {
+    const { postIds } = req.body;
+
+    if (!Array.isArray(postIds) || postIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "postIds must be a non-empty array",
+      });
+    }
+    const posts = await Post.find({ _id: { $in: postIds } })
+      .sort({ createdAt: -1 })
+      .populate([
+      {
+        path: 'user',
+        select: 'name image repostCount'
+      },
+      {
+        path: 'repostedFrom',
+        select: 'content user image ',
+        populate: {
+          path: 'user',
+          select: 'name'
+        }
+      }
+    ]);
+    const userId = req.user?._id?.toString();
+
+  const postsWithExtras = await Promise.all(
+    posts.map(async (post) => {
+      const reacts = await React.find({ post: post._id }).populate('user', 'name image');
+      const myReact = userId ? reacts.find(r => r.user._id.toString() === userId) : null;
+
+      const repostsCount = await Post.countDocuments({ repostedFrom: post._id });
+
+      return {
+        ...post.toObject(),
+        reactsCount: reacts.length,
+        reacts,
+        myReact: myReact || null,
+        repostsCount // 👈 عدد الريبوستات اللى اتعملت على البوست دا
+      };
+    })
+  );
+
+  res.status(200).json({
+  success: true,
+  count: postsWithExtras.length,
+  data: postsWithExtras
+});
+
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
