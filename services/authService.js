@@ -298,7 +298,7 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   }
   res
     .status(200)
-    .json({ status: "Success", message: "Reset code sent to your email" });
+    .json({ status: "Success", message: "Reset code sent to your email", otp : resetCode });
 });
 
 // @desc  verifyPassResetCode
@@ -339,9 +339,9 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
     );
   }
   //2- check reset code
-  if (!user.passwordResetVerified) {
-    return next(new ApiError("Reset code not varified", 404));
-  }
+  // if (!user.passwordResetVerified) {
+  //   return next(new ApiError("Reset code not varified", 404));
+  // }
 
   user.password = req.body.newPassword;
   user.passwordResetExpire = undefined;
